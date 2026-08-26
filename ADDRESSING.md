@@ -6,9 +6,9 @@ Agreed by the group before individual builds started. Update the owner column an
 
 | Site | Owner | Supernet |
 |---|---|---|
-| Site A | *(name)* | `10.1.0.0/16` |
-| Site B | *(name)* | `10.2.0.0/16` |
-| Site C | *(name)* | `10.3.0.0/16` |
+| Site A | *Abishek Sapkota* | `10.1.0.0/16` |
+| Site B | *Anima* | `10.2.0.0/16` |
+| Site C | *Umesh* | `10.3.0.0/16` |
 
 ## Per-site zones (OPNsense)
 
