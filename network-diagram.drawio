@@ -1,0 +1,31 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Overview" id="overview">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="siteA" value="Site A&#10;Abishek&#10;10.1.0.0/16&#10;SITEA.LOCAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="320" y="80" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="siteB" value="Site B&#10;Anima&#10;10.2.0.0/16&#10;SITEB.LOCAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="120" y="320" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="siteC" value="Site C&#10;Umesh&#10;10.3.0.0/16&#10;SITEC.LOCAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="520" y="320" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="Tailscale overlay federates all three sites; solid lines below are the encrypted site-to-site VPN mesh (IPsec/WireGuard)." style="text;html=1;align=center;fontStyle=2;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="120" y="20" width="600" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="eAB" style="edgeStyle=none;html=1;strokeColor=#d79b00;strokeWidth=2;endArrow=none;startArrow=none;" edge="1" parent="1" source="siteA" target="siteB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eAC" style="edgeStyle=none;html=1;strokeColor=#d79b00;strokeWidth=2;endArrow=none;startArrow=none;" edge="1" parent="1" source="siteA" target="siteC">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eBC" style="edgeStyle=none;html=1;strokeColor=#d79b00;strokeWidth=2;endArrow=none;startArrow=none;" edge="1" parent="1" source="siteB" target="siteC">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
