@@ -61,4 +61,6 @@ Tracked on our GitHub Project (Kanban board) — link it here once created. Day-
 
 ## Status
 
+Site A (Abishek) — zones, addressing, and Kerberos (`SITEA.LOCAL`) built and verified end-to-end, including a proven GSSAPI login and a checked packet capture. OPT1/OPT2 firewall rules still need saving properly through the GUI. Sites B and C are not yet built — see `A2-Team-Plan-Architecture.docx` for the live per-site progress table.
+
 🚧 In progress — due **Thursday, 1 October 2026, 11:45 PM**.
