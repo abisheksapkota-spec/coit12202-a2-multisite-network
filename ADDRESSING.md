@@ -43,6 +43,8 @@ Full mesh — three tunnels. Reserved out of a range not used anywhere else, so 
 
 *(WireGuard: this is the `wgX` interface address on each side. Route-based IPsec with a VTI: same idea. Policy-based IPsec: no interface address needed — delete this table's relevance and note it under Assumptions instead.)*
 
+**Decision: IPsec (IKEv2, policy-based, pre-shared key)** — proposed 30 Aug 2026, not yet confirmed by Anima/Umesh. Chosen over WireGuard because it's built into OPNsense's base system, with nothing to install — WireGuard needs the `os-wireguard` plugin, which needs real internet access to OPNsense's package repos, and WAN reachability has been unreliable enough in testing to make that a real risk rather than a formality. Since this is policy-based, no tunnel-interface addressing table is needed — the table above only applies if this later changes to WireGuard or a route-based IPsec VTI. PSKs to be shared per-pair via Teams, not committed to this repo.
+
 ## Tailscale overlay
 
 Each site's OPNsense (or a small dedicated services VM, if the package route doesn't work out) joins one shared tailnet. Tailscale assigns its own `100.x.x.x` addresses automatically — nothing to allocate here, just record each site's Tailscale node name once joined:
