@@ -47,6 +47,8 @@ NAT1 — VPNRouter1 (Tailscale) -- OPNsense1 (edge, VPN tunnel terminates here) 
 | OPNsense1 WAN | Pass (any/any) | Done |
 | OPNsense2 WAN | Block private/bogon disabled + Pass rule added | Done |
 | OPNsense2 OPT1 | Pass rule added | Done |
+<img width="940" height="695" alt="image" src="https://github.com/user-attachments/assets/c23f0af8-adc4-47e2-914e-ca2679ca945b" />
+
 
 ## Status
 
