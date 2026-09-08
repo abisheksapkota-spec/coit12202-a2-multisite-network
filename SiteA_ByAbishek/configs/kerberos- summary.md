@@ -37,3 +37,12 @@ ssh -o GSSAPIAuthentication=yes -o PasswordAuthentication=no -o PreferredAuthent
 ```
 Logged in, no password. Then `kdestroy` + same command → `Permission denied`. Positive and negative proof both confirmed.
 
+
+
+<img width="940" height="315" alt="image" src="https://github.com/user-attachments/assets/1d4fc3ea-0cba-443f-b14b-598b32cb8e26" />
+
+
+<img width="940" height="310" alt="image" src="https://github.com/user-attachments/assets/39485058-192b-4eaf-bd84-129e413a9036" />
+
+
+<img width="940" height="586" alt="image" src="https://github.com/user-attachments/assets/bb00eab1-9b50-44d8-805a-a26e8aac1704" />
