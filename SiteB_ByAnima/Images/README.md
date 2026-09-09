@@ -23,4 +23,12 @@ Screenshots and testing evidence for the Site B implementation.
  ###  Network topology
 <img width="982" height="673" alt="Network topology" src="https://github.com/user-attachments/assets/b7c1f250-d097-4cc5-9c8d-42dedb09976d" />
 
+### IDS B-ROUTING CONFIGURATION
+<img width="661" height="126" alt="09-IDS-B-Routing-Configuration" src="https://github.com/user-attachments/assets/b94af0b2-ea6b-41d1-894d-7f7f3782698a" />
+
+### IDS B MANAGEMENT
+<img width="830" height="331" alt="08-IDS-B-Management-IP" src="https://github.com/user-attachments/assets/46755178-19fc-4123-8d08-97e104dbe909" />
+
+#### Tailscale-SiteB-Connected
+<img width="826" height="187" alt="07-Tailscale-SiteB-Connected png" src="https://github.com/user-attachments/assets/ac1acb38-a984-4a4a-8b3f-45b9333985a2" />
 
