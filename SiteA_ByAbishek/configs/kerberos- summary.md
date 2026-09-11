@@ -1,4 +1,4 @@
-# Site A — Kerberos Build Record
+# Site A - Kerberos Build Record
 
 Realm: `SITEA.LOCAL` · User principal: `abishek`
 
