@@ -2,6 +2,13 @@
 
 Realm: `SITEA.LOCAL` - Supernet: `10.1.0.0/16` - two firewalls (edge + internal)
 
+## Folder contents
+
+- `Addressing.md` - full addressing scheme, table form
+- `configs/` - Kerberos build record, OPNsense config notes
+- `captures/` - packet capture evidence
+- `Images/` - all screenshots referenced above, plus additional connectivity/config evidence not shown inline here
+
 ## Network topology
 
 ![Site A network topology](Images/SiteA_Topology.png)
@@ -19,10 +26,10 @@ Full addressing is labelled directly on the diagram. See `Addressing.md` for the
 - [x] KDC database, principals, keytab, GSSAPI test (positive and negative proof)
 - [x] Kerberos packet capture confirmed (`captures/ClintToSwitchSiteA.pcap`)
 - [x] Tailscale on VPNRouter1 - live, route approved, confirmed reaching Site B
-- [ ] Site-to-site VPN Phase 1 (IKE) on OPNsense1
+- [x] Site-to-site VPN Phase 1 (IKE) on OPNsense1
 - [ ] Site-to-site VPN Phase 2 (needs Site B or C's tunnel endpoint)
 - [ ] VPN before/after packet capture
-- [ ] Suricata ruleset on IDS1
+- [x] Suricata ruleset on IDS1
 - [ ] `.gns3project` export added to this folder (still outstanding)
 
 ## Evidence
@@ -51,11 +58,26 @@ Unticking "Block private networks" alone wasn't enough - an explicit WAN Pass ru
 
 ![Tailscale connected](Images/tailscale-01-vpnrouter1-setup.png)
 
-VPNRouter1 live on the shared tailnet, `10.1.0.0/16` advertised and approved.
+VPNRouter1 live on the shared tailnet, `10.1.0.0/16` advertised and approved.   
 
-## Folder contents
+**IPsec — Phase 1 to Site B**
 
-- `Addressing.md` - full addressing scheme, table form
-- `configs/` - Kerberos build record, OPNsense config notes
-- `captures/` - packet capture evidence
-- `Images/` - all screenshots referenced above, plus additional connectivity/config evidence not shown inline here
+![Phase 1 enabled](Images/opnsense1-ipsec-phase1-enabled-siteb.png)
+
+IKEv2 tunnel to Site B's WAN (`10.2.9.1`), enabled. Phase 2 table is empty in the same screenshot — not configured yet. Phase 1 to Site C still needed.
+
+**Suricata**
+
+| | |
+|---|---|
+| ![Rules loaded](Images/suricata-ids1-rules-loaded.png) | ![Alerts fired](Images/suricata-ids1-alerts-fired.png) |
+| 2/2 custom rules loaded, 0 failed | Both fired: suspicious User-Agent ("BadBot"), and a port-4444 reverse-shell pattern |
+
+Traffic that triggered it:
+
+| | |
+|---|---|
+| ![Host5 curl](Images/host5-curl-host6-webserver.png) | ![Host6 access log](Images/host6-access-log-confirms-host5-request.png) |
+| Host5 (`10.1.20.20`) curls Host6 (`10.1.20.30`) | Host6's access log confirms the request — matches Suricata's alert source/destination exactly |
+
+
