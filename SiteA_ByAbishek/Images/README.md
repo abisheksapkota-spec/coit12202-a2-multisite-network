@@ -1,7 +1,7 @@
 # Images
 
 Screenshots and diagrams for Site A.
-<img width="2440" height="1472" alt="SiteA-network-topology" src="https://github.com/user-attachments/assets/156de625-d9ce-4b3d-a317-da436eed8770" />
+![Site A network topology](Images/SiteA_Topology.png)
 
 
 - `SiteA-network-topology.png` - the actual GNS3 canvas showing the full built topology (two firewalls, transit segment, LAN, DMZ, VPNRouter1, IDS1/Hub1).
