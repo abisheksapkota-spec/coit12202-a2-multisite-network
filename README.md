@@ -63,15 +63,15 @@ Each site folder has its own `README.md` explaining exactly what goes where.
 
 ## Planning
 
-Tracked on our GitHub Project (Kanban board) - link it here once created. Day-to-day communication happens in our Microsoft Teams channel.
+Tracked on our GitHub Project (Kanban board) - kept current throughout the build, not backfilled at the end. Day-to-day communication happens in our Microsoft Teams channel.
 
 ## Status
 
-Site A (Abishek) - fully built and verified: both firewalls configured, GUI access working, Kerberos proven end-to-end (positive and negative GSSAPI login, packet capture confirmed), Tailscale live and confirmed reaching Site B's VPN router. Remaining on Site A: the site-to-site IPsec tunnel itself, and Suricata.
+**Site A (Abishek)** - both firewalls configured and GUI access working, Kerberos proven end-to-end (positive and negative GSSAPI login, packet capture confirmed), Tailscale live and confirmed reaching Site B, Suricata running with both custom rules firing. Site-to-site IPsec Phase 1 and Phase 2 configured for both peers (Site B and Site C); not yet confirmed as an actually-connected tunnel, and the before/after VPN capture is still outstanding. `.gns3project` export still needs adding to the repo.
 
-Site B (Anima) - GNS3 project delivered and building has started; her VPN router is on the shared tailnet and reachable from Site A.
+**Site B (Anima)** - OPNsense-B addressed and configured. Kerberos built past where Site A had reached at the equivalent point - KDC, principals, keytab, and an actual client ticket already obtained. IDS-B has both a management address and routing configured. Tailscale connected to the shared tailnet. Not yet confirmed: a full GSSAPI login test (positive and negative, the way Site A proved it), VPN tunnel status, Suricata.
 
-Site C (Umesh) - GNS3 project delivered, build not yet started.
+**Site C (Umesh)** - full topology built and wired. OPNsense-C addressed (WAN, LAN, DMZ), WAN gateway confirmed active, an OPT1 pass rule in place, DMZ connectivity proven (ping to web-C succeeds). IPsec Phase 1 already configured toward both Site A and Site B. Currently fixing a WAN firewall rule scoping issue (source was set to Site C's own transit range instead of the peer sites'). Not yet done: Kerberos, joining the shared tailnet, Suricata.
 
 Detailed, up-to-date status lives in each site's own `README.md`.
 
