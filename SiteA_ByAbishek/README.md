@@ -28,8 +28,9 @@ Full addressing is labelled directly on the diagram. See `Addressing.md` for the
 - [x] Tailscale on VPNRouter1 - live, route approved, confirmed reaching Site B
 - [x] Site-to-site VPN Phase 1 (IKE) on OPNsense1 - Site B (10.2.9.1) and Site C (10.3.9.1), both IKEv2, enabled
 - [x] IPsec interface Pass rule added on OPNsense1, ahead of Phase 2 existing
-- [ ] Site-to-site VPN Phase 2 - subnet pairing sent to Anima and Umesh for confirmation
-- [ ] VPN before/after packet capture
+- [x] WAN pass rules added for all three sites' transit ranges (`10.1.8.0/24`, `10.2.9.0/24`, `10.3.9.0/24`)
+- [x] Site-to-site VPN Phase 2 - both peers configured: Site B (`10.1.0.0/16` ↔ `10.2.0.0/16`) and Site C (`10.1.0.0/16` ↔ `10.3.0.0/16`), Enable IPsec ticked
+- [ ] VPN before/after packet capture - tunnel is configured but not yet confirmed as actually connected (Phase 1/2 status not checked on VPN → IPsec → Status Overview); capture needs a live tunnel, not just saved config
 - [x] Suricata ruleset on IDS1
 - [ ] `.gns3project` export added to this folder (still outstanding)
 
@@ -61,11 +62,18 @@ Unticking "Block private networks" alone wasn't enough - an explicit WAN Pass ru
 
 VPNRouter1 live on the shared tailnet, `10.1.0.0/16` advertised and approved.
 
-**IPsec - Phase 1 to Site B and Site C**
+**IPsec - Phase 1 and Phase 2, both peers**
 
 ![Both Phase 1 tunnels enabled](Images/opnsense1-ipsec-phase1-both-tunnels-enabled.png)
 
-Two IKEv2 tunnels on OPNsense1, both enabled: `10.2.9.1` (Site B) and `10.3.9.1` (Site C), both 256-bit AES-GCM. Phase 2 still empty for both - subnet pairing (each site's full `/16`) sent to Anima and Umesh for confirmation before configuring.
+Two IKEv2 tunnels on OPNsense1, both enabled: `10.2.9.1` (Site B) and `10.3.9.1` (Site C), both 256-bit AES-GCM.
+
+| | |
+|---|---|
+| ![Phase 2 - Site B](Images/opnsense1-ipsec-phase2-siteb-configured.png) | ![Phase 2 - Site C](Images/opnsense1-ipsec-phase2-sitec-configured.png) |
+| Site B: `10.1.0.0/16` ↔ `10.2.0.0/16` (reqid 1) | Site C: `10.1.0.0/16` ↔ `10.3.0.0/16` (reqid 2) |
+
+Both Phase 2 entries use each site's full `/16` supernet rather than separate LAN/DMZ `/24` pairs - one entry per peer instead of two, functionally equivalent since it's a superset. Enable IPsec is ticked. **Not yet confirmed live** - Status Overview (green/INSTALLED) hasn't been checked, so this is "configured," not "connected," until that's verified.
 
 **IPsec firewall rules - both peers covered**
 
@@ -73,6 +81,10 @@ Two IKEv2 tunnels on OPNsense1, both enabled: `10.2.9.1` (Site B) and `10.3.9.1`
 |---|---|
 | ![WAN auto-generated rules](Images/opnsense1-wan-rules-ipsec-siteb-sitec.png) | ![IPsec interface Pass rule](Images/opnsense1-ipsec-interface-pass-rule.png) |
 | Auto-generated UDP 500/4500 rules for both peers (`10.2.9.1`, `10.3.9.1`) | Pass rule added on the IPsec interface itself - caught before Phase 2 existed, not after |
+
+![Manual WAN pass rules for all three sites](Images/opnsense1-wan-rules-manual-pass-all-sites.png)
+
+Separate from the auto-generated IPsec-specific rules above, explicit WAN pass rules now also exist for all three sites' transit ranges (`10.1.8.0/24`, `10.2.9.0/24`, `10.3.9.0/24`) - broader reachability, not just the IKE/ESP ports IPsec itself needs.
 
 **Suricata**
 
