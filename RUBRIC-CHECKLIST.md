@@ -2,7 +2,7 @@
 
 Check items off as you go. Commit this file to the repo and update it honestly - it's also evidence of planning for the Professionalism criterion.
 
-**Reading the annotations:** boxes only get checked when the *whole team* has met a criterion - most of Section 1–4's items genuinely require all three sites, so they stay unchecked even where one site is done. Where one site has real progress, that's noted inline instead of checking the box early.
+**Reading the annotations:** boxes only get checked when the *whole team* has met a criterion - most of Section 1-4's items genuinely require all three sites, so they stay unchecked even where one site is done. Where one site has real progress, that's noted inline instead of checking the box early.
 
 ## Gates - must clear all three, independent of technical quality
 
@@ -13,7 +13,7 @@ Check items off as you go. Commit this file to the repo and update it honestly -
 ## 1. Enterprise authentication & federation - /6
 
 - [ ] Tailscale federation live between all three sites (screenshot/log of all three nodes in the tailnet) - Site A: live and confirmed. Site B: on the tailnet, reachable from Site A. Site C: not yet joined.
-- [ ] Each site has a working local KDC (own realm, e.g. `SITEA.LOCAL`) - *Site A: done and proven. B/C: not started.*
+- [ ] Each site has a working local KDC (own realm, e.g. `SITEA.LOCAL`) - *Site A: done and proven. Site B: KDC, principals, and a client ticket already evidenced - GSSAPI login not yet confirmed. Site C: not started.*
 - [ ] Cross-realm trust configured both directions for every site pair
 - [ ] **Actual cross-site login demonstrated** - `klist` showing the ticket chain through the other site's `krbtgt`, not just local auth per site
 - [ ] Config (KDC, principals, keytabs) committed to repo - *Site A: done.*
@@ -28,7 +28,7 @@ Check items off as you go. Commit this file to the repo and update it honestly -
 
 ## 3. Site-to-site VPN - /6
 
-- [ ] Tunnel(s) up between all site pairs (IPsec or WireGuard) - *Week 7, not started.*
+- [ ] Tunnel(s) up between all site pairs (IPsec or WireGuard) - *Site A: Phase 1 + Phase 2 configured for both peers, not yet confirmed connected (Status Overview unchecked). B/C: status unknown.*
 - [ ] Before capture: same cross-site traffic, unprotected, payload readable
 - [ ] After capture: same traffic, tunnelled, opaque (ESP / WireGuard)
 - [ ] Each capture states: where captured, filter used, what it proves
@@ -36,7 +36,7 @@ Check items off as you go. Commit this file to the repo and update it honestly -
 
 ## 4. Intrusion detection & consistent policy - /6
 
-- [ ] Suricata running at each site - *Week 8, not started.*
+- [ ] Suricata running at each site - *Site A: done, both rules loaded and firing (evidenced). B/C: not started.*
 - [ ] Same detection policy/ruleset across all three sites
 - [ ] Alert(s) demonstrated firing (log or screenshot)
 - [ ] Placement of Suricata at each site reasoned in the report, not just stated
