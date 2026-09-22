@@ -98,9 +98,50 @@ Second, separately, `server`'s live kernel hostname was found to be `SERVER` (up
 
 *No Kerberos hosts exist yet at either site. Once each site has its own KDC (realms `SITEB.LOCAL`, `SITEC.LOCAL`), this section needs each site's own build documented in the same pattern as Site A above, followed by the cross-realm trust configuration and proof that is the actual multi-site deliverable.*
 
+
 ## 5. Site-to-site VPN
 
-*Tunnel type and topology, why chosen. **Required:** reference the before/after pcap pair in `captures/` - state where captured, filter used, and what it proves.*
+### Design decisions
+
+**Tunnel type: IPsec, IKEv2, policy-based, pre-shared key.** Chosen over WireGuard because IPsec is built into OPNsense's base system with nothing to install, while WireGuard needs the `os-wireguard` plugin, which depends on reliable internet access to OPNsense's package repositories - a real risk given how unreliable WAN reachability proved to be at several points during this build, not a hypothetical concern.
+
+**Tunnel termination: each site's OPNsense WAN address, not the VPN router.** This is stated directly in the unit's own lecture and reference slides - "the tunnel runs firewall WAN to firewall WAN, inside the Tailscale network" - not a team preference. `VPNRouter1` provides the Tailscale underlay only; `OPNsense1` (specifically, the edge firewall, not `OPNsense2`) is the actual tunnel endpoint.
+
+**Phase 2 subnet pairing: each site's full advertised `/16`, not just LAN.** Agreed centrally in `ADDRESSING.md` before individual configuration began, so both ends of every pairing would match without needing to renegotiate scope later.
+
+### Underlay: Tailscale
+
+Both site-to-site pairings have working Tailscale connectivity, confirmed directly rather than assumed:
+
+- **Site A to Site B:** confirmed via a direct ping from `VPNRouter1` to Site B's `OPNsense-B` WAN address, 0% packet loss, after Site B independently hit and fixed the same "ARP resolves but ping fails" WAN rule gap described in Section 3.
+- **Site A to Site C:** `tailscale status` confirms both `VPNRouter1` and `VPNRouter-C` connected on the shared tailnet, with real traffic already exchanged between them (non-zero tx/rx). Direct connectivity to `OPNsense-C`'s WAN specifically has not yet been confirmed working - the same WAN rule gap was found on Site C's side, compounded by a second error (the rule's source was scoped to Site C's own transit subnet rather than the remote sites' subnets, which would never match incoming traffic regardless of the rule's presence). The fix has been communicated; re-confirmation is still pending as of this writing.
+
+![Tailscale connected, VPNRouter1 live on the shared tailnet](../SiteA_ByAbishek/Images/tailscale-01-vpnrouter1-setup.png)
+
+### Phase 1 (IKE)
+
+Configured on `OPNsense1` for both peers: `10.2.9.1` (Site B) and `10.3.9.1` (Site C), both IKEv2, both 256-bit AES-GCM with a 128-bit ICV, SHA256 hash, DH group 14, PSK authentication. Both enabled.
+
+![Both Phase 1 tunnels enabled, Phase 2 table still empty](../SiteA_ByAbishek/Images/opnsense1-ipsec-phase1-both-tunnels-enabled.png)
+
+Firewall rules for both tunnels confirmed in place on `OPNsense1`'s WAN (auto-generated UDP 500/4500 and ESP rules for each peer) and, separately, an explicit Pass rule added on the IPsec interface itself before Phase 2 existed - an unconfigured IPsec interface blocks all traffic by default the same way a fresh WAN interface does, so this was added proactively rather than reactively. See Section 3 for the full rule detail and the source-scoping bug this surfaced.
+
+### Phase 2
+
+Configured on `OPNsense1` for both peers, using the agreed `/16` pairing:
+
+| Peer | Local network | Remote network |
+|---|---|---|
+| Site B | 10.1.0.0/16 | 10.2.0.0/16 |
+| Site C | 10.1.0.0/16 | 10.3.0.0/16 |
+
+**Not yet live on either pairing.** Phase 2 only installs once both sides' settings match exactly - Site A's side is configured and ready, but confirmation that Anima's and Umesh's Phase 2 entries mirror this (their local = their own `/16`, their remote = `10.1.0.0/16`) has been requested and is still pending as of this writing. This is expected, not a failure: Phase 1 establishing correctly on both sides was itself the prerequisite for this step, and that groundwork is confirmed done.
+
+### Still required (not yet possible)
+
+The before/after packet capture pair required for this section cannot be produced until a Phase 2 pairing actually installs on at least one tunnel - there is no real inter-site traffic to capture until then. This is the one piece of Site A's VPN work still genuinely blocked on another site's configuration, rather than something solvable independently.
+
+
 
 ## 6. Intrusion detection (Suricata)
 
