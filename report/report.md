@@ -145,7 +145,54 @@ The before/after packet capture pair required for this section cannot be produce
 
 ## 6. Intrusion detection (Suricata)
 
-*Ruleset used, why placed where it is at each site, evidence of an alert firing.*
+### Site A (Abishek) - complete and proven
+
+`IDS1` sits on `Hub1` in the DMZ, tapping traffic to and from `Host6` (`10.1.20.30`) - a hub, unlike a switch, broadcasts to every connected port, which is what makes passive monitoring possible without needing a dedicated mirror port. `Host5` (`10.1.20.20`) generates the test traffic that crosses that segment.
+
+**Two custom rules**, added to `/var/lib/suricata/rules/custom.rules`:
+
+- `sid:1000001` - alerts on an HTTP request whose User-Agent header contains the string `BadBot`, classified as a web application attack.
+- `sid:1000002` - alerts on any outbound TCP connection to port 4444, classified as trojan activity (a common default port for reverse-shell tooling).
+
+`HOME_NET` was already set to `10.0.0.0/8` by default, which covers Site A's `10.1.20.0/24` DMZ without needing to edit `suricata.yaml`.
+
+Both rules validated cleanly before the engine was started:
+
+![Both custom rules loaded, 0 failed](../SiteA_ByAbishek/Images/suricata-ids1-rules-loaded.png)
+
+**Both rules triggered and confirmed:**
+
+```
+curl -A "BadBot" http://10.1.20.30/
+```
+
+from `Host5` to `Host6`'s web server produced an immediate alert for `sid:1000001`. A plain `curl` with no matching User-Agent, run immediately after as a negative control, produced no alert - confirming the rule matches on the header content specifically, not just the presence of HTTP traffic.
+
+```
+echo "test data" | nc 10.1.20.30 4444
+```
+
+against a listener running on `Host6` produced an alert for `sid:1000002`.
+
+![Both alerts fired, visible together in fast.log](../SiteA_ByAbishek/Images/suricata-ids1-alerts-fired.png)
+
+**The traffic that triggered it, cross-checked against an independent source:** rather than relying on Suricata's own alert as the only evidence, the underlying HTTP request and its arrival at `Host6` were confirmed separately.
+
+| | |
+|---|---|
+| ![Host5 sends the request](../SiteA_ByAbishek/Images/host5-curl-host6-webserver.png) | ![Host6's own access log confirms it arrived](../SiteA_ByAbishek/Images/host6-access-log-confirms-host5-request.png) |
+| `Host5` (`10.1.20.20`) curls `Host6`'s web server | `Host6`'s own web server access log shows the same request, matching Suricata's alert source and destination exactly |
+
+This cross-check matters: it demonstrates the alert corresponds to real, independently-verifiable traffic, not a false positive or a misconfigured test.
+
+**A known limitation of the current wiring, worth stating rather than glossing over:** `IDS1` only sees traffic where `Host6` specifically is the source or destination, since `Host6` is the only leaf host actually sitting on the hub segment - `WEB-A` connects through `Switch3`, a real switch, which only forwards traffic to where its destination actually is. General DMZ traffic not involving `Host6` is therefore not currently visible to the sensor. The test traffic above was deliberately routed through `Host6` to work within this constraint rather than ignore it; a more complete deployment would connect every DMZ host directly to the hub instead of through a switch, so all DMZ traffic is visible, not just traffic to one specific host.
+
+**Evidence:** `SiteA_ByAbishek/Images/suricata-ids1-rules-loaded.png`, `suricata-ids1-alerts-fired.png`, `host5-curl-host6-webserver.png`, `host6-access-log-confirms-host5-request.png`.
+
+### Site B (Anima) and Site C (Umesh) - not yet started
+
+*Neither site has a Suricata ruleset configured yet. Once built, the same wiring limitation described above is worth checking for on both sites before assuming the sensor sees general DMZ traffic - IDS-B and IDS-C both sit on their own hub in a similar topology to Site A's original design.*
+
 
 ## 7. Defence-in-depth and trust boundaries
 
