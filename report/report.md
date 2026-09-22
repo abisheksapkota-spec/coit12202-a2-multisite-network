@@ -1,80 +1,106 @@
-# Secured Multi-Site Network — Security Justification Report
+# Secured Multi-Site Network - Security Justification Report
 
-**Team:** Abishek (Site A, team lead) · Anima (Site B) · Umesh (Site C)
-**Unit:** COIT12202 — Assessment 2
+**Team:** Abishek (Site A, team lead) - Anima (Site B) - Umesh (Site C)
+**Unit:** COIT12202 - Assessment 2
 
-> **Draft status:** Sections 1–4 are drafted from Site A's completed build, with real evidence cited throughout. Sections 5–9 remain scaffolded (in *italics*) until VPN, Suricata, and Sites B/C exist — they need real content before submission, not filling in early with guesses. Anima and Umesh: add your sites' material into sections 3 and 4 alongside Site A's rather than replacing it, since the report needs to justify all three, not just one.
+> **Draft status:** Sections 1-4 are drafted from Site A's completed build, with real evidence cited throughout. Sections 5-9 remain scaffolded (in *italics*) until VPN, Suricata, and Sites B/C exist - they need real content before submission, not filling in early with guesses. Anima and Umesh: add your sites' material into sections 3 and 4 alongside Site A's rather than replacing it, since the report needs to justify all three, not just one.
 
 ## 1. Scenario and assumptions
 
 This build implements the assessment's scenario directly: three branch sites, one owned end-to-end by each group member, federated into a single security-consistent network. The assumptions below are ones the build actually depends on, not a general restatement of the spec.
 
-- **WAN represents each site's path to the internet** via the host machine's own network adapter/NAT, not a real ISP circuit — reflected in how each site's Cloud/NAT node is wired directly to OPNsense's WAN interface.
-- **Tailscale (or an equivalent bridged reachability layer)** solves a specific problem: three independently-hosted GNS3 topologies, each on a different physical machine, have no shared network to plug into. It is the *underlay* that makes cross-site reachability possible at all — it is not the encrypted link itself.
-- **The site-to-site VPN tunnel (IPsec/WireGuard, Week 7)** is the actual encrypted, audited connection carrying real inter-site traffic, built on top of that underlay. This two-layer design is deliberate: the assignment's "federate the sites" and "site-to-site VPN" requirements are two separate layers solving two separate problems, not duplicate work.
+- **WAN represents each site's path to the internet** via the host machine's own network adapter/NAT, not a real ISP circuit - reflected in how each site's Cloud/NAT node is wired directly to OPNsense's WAN interface.
+- **Tailscale (or an equivalent bridged reachability layer)** solves a specific problem: three independently-hosted GNS3 topologies, each on a different physical machine, have no shared network to plug into. It is the *underlay* that makes cross-site reachability possible at all - it is not the encrypted link itself.
+- **The site-to-site VPN tunnel (IPsec)** is the actual encrypted, audited connection carrying real inter-site traffic, built on top of that underlay. This two-layer design is deliberate: the assignment's "federate the sites" and "site-to-site VPN" requirements are two separate layers solving two separate problems, not duplicate work.
 - **Addressing is agreed centrally** (`ADDRESSING.md`) before individual builds, with each site owning a distinct `/16` (Site A `10.1.0.0/16`, Site B `10.2.0.0/16`, Site C `10.3.0.0/16`) so that once tunnels exist, routing between sites is unambiguous.
-- **MGMT hosts administrative traffic only** — nothing in MGMT is reachable from LAN or DMZ by default, and inter-zone access requires an explicit rule, not an implicit trust.
+- **The tunnel terminates on each site's OPNsense WAN address, not the VPN router** - stated directly in the unit's own lecture and reference slides, not a team preference.
 
 ## 2. Architecture overview
 
-Each site runs the same pattern: an OPNsense firewall with four zones (WAN, LAN, DMZ, MGMT), a local Kerberos KDC serving that site's realm, and — once Week 8 material is confirmed — a Suricata sensor watching the LAN/WAN boundary. The three sites are identical in *structure* and differ only in addressing and realm name, which is what makes the eventual cross-realm trust and VPN mesh tractable: every site expects the same shape from its peers.
+Each site runs an OPNsense firewall with WAN, LAN, and DMZ zones, a local Kerberos KDC serving that site's realm, and (once built) a Suricata sensor watching the DMZ. Site A additionally runs two firewalls rather than one - a deliberate extension, not a requirement. The three sites are identical in *structure* and differ only in addressing and realm name, which is what makes the cross-realm trust and VPN mesh tractable: every site expects the same shape from its peers.
 
-The Tailscale-overlay-plus-VPN-tunnel distinction (Section 1) is the central architectural decision of this build. Without it, there would be no way to get three separately-hosted GNS3 instances talking to each other at all; without the VPN layer on top, whatever traffic did cross between sites would be unencrypted and unaudited. Site A's OPNsense firewall additionally demonstrates why this distinction had to be understood correctly rather than assumed: an initial interface assignment mistake (Section 3) put WAN and LAN on the wrong physical adapters relative to what the console believed, which would have silently broken this exact design if left uncaught.
+The Tailscale-overlay-plus-VPN-tunnel distinction (Section 1) is the central architectural decision of this build. Without it, there would be no way to get three separately-hosted GNS3 instances talking to each other at all; without the VPN layer on top, whatever traffic did cross between sites would be unencrypted and unaudited.
 
-*(Reference `network-diagram.drawio` for the full multi-site diagram once Sites B and C exist. Currently reflects Site A only plus the planned mesh shape.)*
+*(Reference `network-diagram.drawio` for the full multi-site diagram.)*
 
 ## 3. Firewalls and zones
 
-### Site A (Abishek) — complete
+### Site A (Abishek) - complete
 
-Site A's OPNsense firewall (`OPNsense1`) implements the four-zone pattern with the following addressing, confirmed working end-to-end:
+Site A runs two firewalls rather than one: `OPNsense1` (edge, facing the transit/Tailscale side) and `OPNsense2` (internal, handling LAN and DMZ). This is a deliberate design choice building on the individual Week 5/6 labs, not a requirement of the assignment specification - the course's own reference architecture shows a single firewall as sufficient.
 
-| Zone | Interface | Subnet | Gateway |
+**Addressing:**
+
+| Zone | Firewall | Subnet | Gateway |
 |---|---|---|---|
-| WAN | vtnet0 | Tailscale/DHCP-assigned | — |
-| LAN | vtnet1 | `10.1.10.0/24` | `10.1.10.1` |
-| DMZ (OPT1) | vtnet2 | `10.1.20.0/24` | `10.1.20.1` |
-| MGMT (OPT2) | vtnet3 | `10.1.30.0/24` | `10.1.30.1` |
+| WAN / transit | OPNsense1 | 10.1.9.0/24 | 10.1.9.1 |
+| Inter-firewall | OPNsense1 to OPNsense2 | 10.1.8.0/24 | 10.1.8.1 / 10.1.8.2 |
+| LAN | OPNsense2 | 10.1.10.0/24 | 10.1.10.1 |
+| DMZ (OPT1) | OPNsense2 | 10.1.20.0/24 | 10.1.20.1 |
 
-**A genuine mistake worth documenting as justification, not hiding:** the first interface assignment put WAN on `vtnet1` and LAN on `vtnet0` — the reverse of the actual physical wiring — because the console's WAN auto-detect failed and a manual guess was made without cross-checking the GNS3 topology file. This produced a confusing symptom (LAN's gateway address existed, but on the wrong physical link, so nothing on the LAN switch could ever reach it) that took a systematic elimination process to diagnose: testing the switch in isolation with a throwaway VPCS node (ruling the switch itself in or out), then inspecting the exported `.gns3project` topology JSON directly to compare the *declared* adapter-to-device wiring against the *console's* interface assignment. The mismatch was exact and immediately explained every symptom observed. The fix — reassigning WAN↔LAN to match the real wiring rather than the initial guess — resolved connectivity immediately. This is included here because it demonstrates the zone design being *understood*, not just clicked into place: the fix required knowing what each zone's traffic path was supposed to look like in order to recognise it was wrong.
+**A real bug, diagnosed and fixed, worth including as evidence of understanding rather than just following steps:** early testing showed `OPNsense1` unable to ping `OPNsense2` across the inter-firewall segment - 100% packet loss - despite both interfaces being correctly addressed and both showing as up. Unticking "Block private networks" and "Block bogon networks" on the WAN interface, the fix suggested by OPNsense's own documentation, made no difference. The actual cause: those two settings only remove *automatic* blocks, they do not add a Pass rule. WAN interfaces start with zero rules by default, so nothing was explicitly permitting the traffic through at all.
 
-**Firewall rules:** LAN carries OPNsense's default allow-outbound rule. DMZ and MGMT (OPT1/OPT2) start with no rules by default — this is the platform's correct least-privilege behaviour, not a bug — so explicit Pass rules were required before `web-a` and `admin-a` could reach anything, including their own gateway. *(Rules currently only proven with the firewall temporarily disabled for testing — see Section 7 for why leaving it there is not acceptable, and what the real fix requires.)*
+| Before the fix | After the fix |
+|---|---|
+| ![Ping fails, 100% loss](../SiteA_ByAbishek/Images/opnsense1-to-opnsense2-ping-FAIL-before-fix.png) | ![Ping succeeds, 0% loss](../SiteA_ByAbishek/Images/opnsense1-to-opnsense2-ping-SUCCESS-after-fix.png) |
 
-**Evidence:** `SiteA_ByAbishek/Images/network-diagram.png`, `opnsense-interfaces-final.png`, `ping-kdc.png`, `ping-server.png`, `ping-client.png`; full config summary in `SiteA_ByAbishek/configs/site-a-network-config.md`.
+Adding an explicit Pass rule (source `10.1.8.0/24`, matching the inter-firewall segment) resolved it immediately, confirmed 0% packet loss both directions afterward.
 
-### Site B (Anima) — not yet started
+**A second, related bug found later while extending this to the site-to-site VPN work, illustrating why source scoping needs care, not just presence:** when adding the equivalent WAN Pass rule needed for IPsec traffic arriving from the other two sites, the first attempt scoped the rule's source to Site A's *own* transit subnet (`10.1.9.0/24`) rather than the *remote* sites' transit subnets (`10.2.9.0/24`, `10.3.9.0/24`). Traffic arriving from another site over Tailscale will never have a source address inside Site A's own local subnet, so a rule scoped that way would never match the traffic it was meant to permit. The same mistake was independently caught during Site C's build using the identical rule pattern, which is what prompted re-checking Site A's own rule rather than assuming it was correct by precedent. Corrected to scope the source to the actual remote transit ranges.
 
-*Diagram drafted (edge router + OPNsense + three zones + a bastion host in DMZ, a genuine defence-in-depth addition worth expanding on here once built). Addressing and rules not yet confirmed against `ADDRESSING.md`.*
+**Current firewall rules, both firewalls:**
 
-### Site C (Umesh) — not yet started
+![WAN auto-generated rules for both IPsec peers](../SiteA_ByAbishek/Images/opnsense1-wan-rules-ipsec-siteb-sitec.png)
 
-*Not yet shared with the group.*
+- `OPNsense1` WAN: Pass, source `10.1.8.0/24` (inter-firewall) and `10.2.9.0/24, 10.3.9.0/24` (remote site transit ranges, for IPsec)
+- `OPNsense1` IPsec interface: Pass, source/destination any - added proactively before Phase 2 existed, since an unconfigured IPsec interface blocks all traffic by default the same way WAN does
+
+![IPsec interface Pass rule applied](../SiteA_ByAbishek/Images/opnsense1-ipsec-interface-pass-rule.png)
+
+- `OPNsense2` WAN: Pass, source `10.1.8.0/24`
+- `OPNsense2` OPT1 (DMZ): Pass, source OPT1 net
+
+![OPNsense2 OPT1 Pass rule being created](../SiteA_ByAbishek/Images/opnsense2-wan-rule-creation.png)
+
+### Site B (Anima) and Site C (Umesh)
+
+Both single-firewall builds, following the course's simpler reference architecture. Both independently hit the same "block-private-networks alone is not enough" WAN rule gap Site A found first, confirming this is a general OPNsense behaviour rather than something specific to the two-firewall design. Site C's build additionally surfaced the source-scoping error described above, which was then checked for and corrected on Site A's own equivalent rule as a result.
 
 ## 4. Enterprise authentication (Kerberos)
 
-### Site A (Abishek) — realm `SITEA.LOCAL`, complete and proven
+### Site A (Abishek) - realm `SITEA.LOCAL`, complete and proven
 
-Site A runs its own Kerberos realm across three hosts on the LAN zone: `kdc` (`10.1.10.10`), `server` (`10.1.10.20`), and `client` (`10.1.10.30`). The realm was renamed from the individual Week 5 lab's `EXAMPLE.COM` to `SITEA.LOCAL` throughout `/etc/krb5.conf` and `/etc/hosts` on all three hosts, and re-addressed from the standalone `10.10.1.0/24` lab network into Site A's real LAN, behind OPNsense.
+Site A runs its own Kerberos realm across three hosts on the LAN zone: `kdc` (`10.1.10.10`), `server` (`10.1.10.20`), and `client` (`10.1.10.30`), plus a Firefox-equipped `Host1` (`10.1.10.40`) used only for GUI access to OPNsense, not part of the realm. User principal: `abishek`.
 
-The KDC database was initialised (`kdb5_util create -s`), and three principals created: `student` (a user principal), and `host/server.sitea.local` / `host/client.sitea.local` (service principals). The server's keytab was exported and transferred to `server` over HTTP within the LAN — a deliberately simple transfer method requiring no pre-shared credentials, appropriate given the transfer happens entirely within an already-trusted zone.
+The KDC database was initialised (`kdb5_util create -s`), and principals created for the user plus each host's service identity (`host/server.sitea.local`, `host/client.sitea.local`, `host/kdc.sitea.local`). The server's keytab was exported and transferred over HTTP within the LAN.
 
-**A second genuine bug, also worth including as justification:** once GSSAPI was enabled on `server`'s SSH daemon, authentication failed with `No key table entry found matching host/server@` — notably, with no realm suffix at all. The keytab and `krb5.conf` were both confirmed correct by direct inspection, which narrowed the fault to something outside Kerberos's own configuration. The cause was the Docker container's live kernel hostname (`server`, set by the container runtime at start) not matching the FQDN the keytab was issued under (`server.sitea.local`) — despite `/etc/hostname` *appearing* correct, because editing that file does not itself change the running hostname. Setting the hostname live (`hostname server.sitea.local`) and restarting the SSH daemon resolved it immediately. This distinction — between a config file's stated value and a running process's actual state — is a useful thing to have diagnosed correctly rather than worked around.
+![KDC database initialised, daemons running](../SiteA_ByAbishek/Images/kerberos-02-kdc-database-init.png)
 
-**Proof, both directions:** with a valid ticket (`kinit student`), `ssh` to `server` using only `GSSAPIAuthentication`/`PreferredAuthentications=gssapi-with-mic` succeeded with no password prompt. After `kdestroy`, the identical command was refused (`Permission denied`). Running the same test twice with only the ticket's presence changed is the actual evidence that the login mechanism was Kerberos and not something else (e.g. a cached credential or misconfigured fallback).
+![All principals created, keytab exported](../SiteA_ByAbishek/Images/kerberos-03-principals-keytab-listprincs.png)
 
-**Packet capture verified** (`SiteA_ByAbishek/captures/Auth-Kerberos-12312491-client.pcap`, filter `kerberos`): exactly four packets — AS-REQ/AS-REP (from `kinit`) and TGS-REQ/TGS-REP (from the SSH connection's service-ticket request), both exchanges between `client` (`10.1.10.30`) and `kdc` (`10.1.10.10`).
+**Two genuine bugs hit and fixed, worth including as justification rather than omitting:**
 
-**What's not yet done:** the assignment's actual "cross-site authentication" requirement is cross-*realm* trust between sites, which cannot be built or demonstrated until Sites B and C have their own working KDCs. Site A's realm is built correctly to support that once they exist, but this section currently only demonstrates local (single-site) authentication working end-to-end.
+First, once GSSAPI was enabled on `server`'s SSH daemon, login failed with a generic `Permission denied` and no useful reason at default verbosity. Running the SSH daemon in foreground debug mode revealed the actual cause: `platform_locked_account: password matches locked prefix '!'` - the `abishek` Unix account had been locked by an earlier failed `passwd` attempt, and a locked account blocks every authentication method, including GSSAPI, regardless of ticket validity. Every layer above this (keytab, GSSAPI config, the daemon itself) was already correct; this was purely a Unix account state issue, invisible until checked at debug verbosity. Fixed with `passwd -u abishek`.
 
-**Evidence:** `SiteA_ByAbishek/Images/kerberos-01` through `-09` (full task sequence), `SiteA_ByAbishek/configs/site-a-kerberos-summary.md` for the complete command-by-command record.
+Second, separately, `server`'s live kernel hostname was found to be `SERVER` (uppercase, no domain suffix) rather than `server.sitea.local`. Kerberos hostname matching is case-sensitive, so this alone would have blocked GSSAPI even with the account unlocked. The `/etc/hostname` file can say the right thing while the container runtime's live hostname says something else entirely - confirmed with the bare `hostname` command, not just the file. Fixed with `hostname server.sitea.local` followed by a daemon restart. This distinction, between a config file's stated value and a running process's actual state, is a useful thing to have diagnosed correctly rather than worked around.
 
-### Site B (Anima) and Site C (Umesh) — not yet built
+**Proof, both directions:** with a valid ticket (`kinit abishek`), `ssh` to `server` using only `GSSAPIAuthentication`/`PreferredAuthentications=gssapi-with-mic` succeeded with no password prompt. After `kdestroy`, the identical command was refused (`Permission denied`). Running the same test twice with only the ticket's presence changed is the actual evidence that the login mechanism was Kerberos and not something else.
+
+![GSSAPI login: succeeds with a ticket, denied without one](../SiteA_ByAbishek/Images/kerberos-04-gssapi-positive-negative-proof.png)
+
+**Packet capture** (`SiteA_ByAbishek/captures/ClintToSwitchSiteA.pcap`, filter `kerberos`): six Kerberos packets rather than the minimum four, because `kinit` was run twice in immediate succession during capture, producing two full AS-REQ/AS-REP exchanges before the single TGS-REQ/TGS-REP pair from the SSH connection. The negative-proof attempt (after `kdestroy`) is also visible in the same capture as a TCP/SSH handshake with zero preceding Kerberos packets, closing in well under a second rather than completing a real session - consistent with the connection being refused before a service ticket could even be requested. Documented in full in `SiteA_ByAbishek/captures/README.md`.
+
+**What's not yet done:** cross-*realm* trust between sites, the assignment's actual multi-site authentication requirement, cannot be built or demonstrated until Sites B and C have their own working KDCs. Site A's realm is built correctly to support that once they exist.
+
+**Evidence:** `SiteA_ByAbishek/Images/kerberos-02` through `-04`, `SiteA_ByAbishek/configs/kerberos-summary.md` for the complete command-by-command record.
+
+### Site B (Anima) and Site C (Umesh) - not yet built
 
 *No Kerberos hosts exist yet at either site. Once each site has its own KDC (realms `SITEB.LOCAL`, `SITEC.LOCAL`), this section needs each site's own build documented in the same pattern as Site A above, followed by the cross-realm trust configuration and proof that is the actual multi-site deliverable.*
 
 ## 5. Site-to-site VPN
 
-*Tunnel type and topology (mesh vs hub-spoke), why chosen. **Required:** reference the before/after pcap pair in `captures/` — state where captured, filter used, and what it proves.*
+*Tunnel type and topology, why chosen. **Required:** reference the before/after pcap pair in `captures/` - state where captured, filter used, and what it proves.*
 
 ## 6. Intrusion detection (Suricata)
 
@@ -82,11 +108,11 @@ The KDC database was initialised (`kdb5_util create -s`), and three principals c
 
 ## 7. Defence-in-depth and trust boundaries
 
-*Tie the previous sections together — where do overlapping controls exist? Where is trust granted between sites, and why is that boundary justified rather than just convenient? (Note for whoever writes this: Site A's current reliance on a temporarily-disabled firewall for DMZ/MGMT testing belongs here as a known gap to close, not as something to omit.)*
+*Tie the previous sections together - where do overlapping controls exist? Where is trust granted between sites, and why is that boundary justified rather than just convenient?*
 
-## 8. Wireless extension (required — design only)
+## 8. Wireless extension (required - design only)
 
-*Wireless-specific threats (e.g. evil twin, deauthentication, KRACK/4-way-handshake capture, rogue access points) and the defences you'd deploy to extend this architecture to wireless (e.g. WPA3-SAE/Enterprise, 802.1X with EAP-TLS and RADIUS, management-frame protection, SSID-to-VLAN segmentation, wireless IDS). Tie every choice back to your existing trust boundaries — nothing wireless is built.*
+*Wireless-specific threats (e.g. evil twin, deauthentication, KRACK/4-way-handshake capture, rogue access points) and the defences you'd deploy to extend this architecture to wireless (e.g. WPA3-SAE/Enterprise, 802.1X with EAP-TLS and RADIUS, management-frame protection, SSID-to-VLAN segmentation, wireless IDS). Tie every choice back to your existing trust boundaries - nothing wireless is built.*
 
 ## 9. Conclusion
 
