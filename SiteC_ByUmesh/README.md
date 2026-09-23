@@ -1,269 +1,137 @@
-# Site C – Umesh
+# Site C – Umesh Kunwar
 
 ## COIT12202 Assessment 2 – Secured Multi-Site Network
 
-**Site Owner:** Umesh  
+**Owner:** Umesh Kunwar  
 **Site:** Site C  
-**Kerberos Realm:** `SITEC.LOCAL`  
-**Site Supernet:** `10.3.0.0/16`
+**Kerberos realm:** `SITEC.LOCAL`  
+**Site supernet:** `10.3.0.0/16`
 
----
+## Addressing
 
-## 1. Site C Overview
-
-Site C is one component of the secured multi-site network developed for the COIT12202 Assessment 2 team project.
-
-Site C uses a single OPNsense firewall to provide network segmentation and firewall control between the WAN, LAN, and DMZ networks.
-
-The site also includes Kerberos authentication, IPsec site-to-site VPN connectivity, Tailscale routing, and Suricata IDS functionality.
-
----
-
-## 2. Network Addressing
-
-| Device / Network | IP Address / Subnet |
+| Component | Address |
 |---|---|
-| Site C Supernet | `10.3.0.0/16` |
-| WAN / Transit Network | `10.3.9.0/24` |
+| Site C supernet | `10.3.0.0/16` |
+| WAN / transit | `10.3.9.0/24` |
 | OPNsense-C WAN | `10.3.9.1/24` |
-| VPNRouter-C Transit | `10.3.9.2` |
-| LAN Network | `10.3.10.0/24` |
+| VPNRouter-C transit | `10.3.9.2` |
+| LAN | `10.3.10.0/24` |
 | OPNsense-C LAN | `10.3.10.1/24` |
 | kdc-C | `10.3.10.10` |
 | server-C | `10.3.10.20` |
 | client-C | `10.3.10.30` |
 | Host1-C | `10.3.10.40` |
-| DMZ Network | `10.3.20.0/24` |
-| OPNsense-C OPT1 / DMZ | `10.3.20.1/24` |
+| DMZ | `10.3.20.0/24` |
+| OPNsense-C DMZ | `10.3.20.1/24` |
 | web-C | `10.3.20.10` |
 | IDS-C | `10.3.20.20` |
 
----
+## OPNsense-C
 
-## 3. OPNsense Configuration
+Interfaces:
+- WAN `vtnet0` → `10.3.9.1/24`
+- LAN `vtnet1` → `10.3.10.1/24`
+- OPT1/DMZ `vtnet2` → `10.3.20.1/24`
+- WAN gateway → `10.3.9.2`
 
-OPNsense-C provides firewalling and routing for Site C.
+Current firewall work:
+- WAN permits Site A transit source `10.1.9.0/24`
+- WAN permits Site B transit source `10.2.9.0/24`
+- Removed the unrestricted wildcard WAN pass rule
+- LAN default IPv4 LAN-net-to-any rule retained
+- OPT1/DMZ pass rule: source `OPT1 net` → any
+- Aliases: `SITE_C_LAN` and `SITE_C_DMZ`
 
-### Interface Assignment
+## IPsec
 
-- WAN → `vtnet0`
-- LAN → `vtnet1`
-- OPT1 / DMZ → `vtnet2`
-
-### Interface Addresses
-
-- WAN → `10.3.9.1/24`
-- LAN → `10.3.10.1/24`
-- OPT1 → `10.3.20.1/24`
-
-### WAN Gateway
-
-VPNRouter-C is configured as the WAN gateway:
-
-`10.3.9.2`
-
-The WAN private-network and bogon-network automatic blocking options were disabled for the GNS3 lab environment.
-
----
-
-## 4. Firewall Configuration
-
-### WAN Rule
-
-A WAN Pass rule was configured to permit traffic from the Site C transit network.
-
-- Action: `Pass`
-- Protocol: `Any`
-- Source: `10.3.9.0/24`
-- Destination: `Any`
-
-### OPT1 / DMZ Rule
-
-A Pass rule was configured for the Site C DMZ.
-
-- Action: `Pass`
-- Protocol: `Any`
-- Source: `OPT1 net`
-- Destination: `Any`
-
-Network aliases were also created for:
-
-- `SITE_C_LAN` → `10.3.10.0/24`
-- `SITE_C_DMZ` → `10.3.20.0/24`
-
----
-
-## 5. IPsec VPN
-
-Site C uses IKEv2 IPsec for secured site-to-site VPN connectivity.
-
-OPNsense-C WAN (`10.3.9.1`) is the IPsec termination point.
+Site C terminates IPsec on OPNsense-C WAN `10.3.9.1`.
 
 ### Site C ↔ Site A
-
-Remote Gateway:
-
-`10.1.9.1`
+- Peer WAN: `10.1.9.1`
+- Phase 2 local: `10.3.0.0/16`
+- Phase 2 remote: `10.1.0.0/16`
 
 ### Site C ↔ Site B
+- Peer WAN: `10.2.9.1`
+- Phase 2 local: `10.3.0.0/16`
+- Phase 2 remote: `10.2.0.0/16`
 
-Remote Gateway:
+Phase 2 proposal used:
+- Protocol: ESP
+- Encryption: AES-256-GCM (`aes256gcm16`)
+- Hash: SHA256
+- PFS: Group 14 (2048 bits)
+- Lifetime: 3600 seconds
 
-`10.2.9.1`
+Phase 2 configuration has been entered. Final tunnel status and cross-site traffic still need to be captured as evidence.
 
-### Phase 1 Parameters
+## Suricata IDS
 
-- Key Exchange: `IKEv2`
-- Encryption: `AES-GCM`
-- Key Length: `256 bits`
-- ICV: `128 bits`
-- Hash: `SHA256`
-- DH Group: `14 (2048 bit)`
-- Lifetime: `28800`
-- Authentication: Pre-Shared Key
+IDS-C uses `10.3.20.20`. Suricata configuration validation succeeded and custom rules loaded successfully. ICMP traffic between `web-C (10.3.20.10)` and `IDS-C (10.3.20.20)` generated `SITE-C ICMP Ping Detected` alerts in `fast.log`.
 
-> Pre-shared keys are intentionally not stored in this repository.
+Additional custom rules were added/tested during the IDS configuration work. Evidence is stored under `Images/All_Shared_Screenshots/`.
 
-Phase 1 has been configured for both Site A and Site B.
+## Tailscale
 
-Phase 2 and end-to-end tunnel verification will be completed in coordination with the peer sites.
-
----
-
-## 6. Tailscale
-
-Tailscale will run on VPNRouter-C and provide connectivity between the three site networks.
-
-Site C will advertise:
+Site C must advertise the full Site C supernet:
 
 `10.3.0.0/16`
 
-Planned command:
+Tailscale cross-site routing still needs final configuration/approval and verification before marking it complete.
 
-`tailscale up --advertise-routes=10.3.0.0/16 --snat-subnet-routes=false --accept-routes`
+## Kerberos
 
-The advertised subnet route must also be approved through the team's Tailscale administration console.
+- Realm: `SITEC.LOCAL`
+- KDC: `10.3.10.10`
+- Server: `10.3.10.20`
+- Client: `10.3.10.30`
 
-**Status:** Pending configuration and cross-site testing.
+Local and cross-realm Kerberos verification should only be marked complete after evidence is captured.
 
----
-
-## 7. Kerberos
-
-Site C Kerberos realm:
-
-`SITEC.LOCAL`
-
-Main Kerberos systems:
-
-- kdc-C → `10.3.10.10`
-- server-C → `10.3.10.20`
-- client-C → `10.3.10.30`
-
-The final configuration will include local authentication and cross-realm trust with the other project sites.
-
-**Status:** Pending final configuration and cross-site authentication testing.
-
----
-
-## 8. Suricata IDS
-
-IDS-C is used for intrusion detection on Site C.
-
-Planned IDS testing includes:
-
-- Suspicious HTTP User-Agent detection
-- TCP port 4444 / possible reverse-shell traffic detection
-- Suricata alert-log verification
-- Positive and negative test evidence
-
-**Status:** Pending final configuration and alert demonstration.
-
----
-
-## 9. Evidence
-
-Site C evidence screenshots are stored in:
-
-`SiteC_ByUmesh/Images/`
-
-Evidence includes:
-
-- GNS3 Site C topology
-- OPNsense interface assignment
-- OPNsense interface IP configuration
-- WAN gateway configuration
-- WAN firewall rule
-- OPT1 / DMZ firewall rule
-- web-C IP configuration
-- Local connectivity testing
-- IPsec Phase 1 configuration
-
-Additional evidence will be added for:
-
-- Tailscale connectivity
-- IPsec Phase 2
-- Cross-site VPN connectivity
-- Kerberos authentication
-- Cross-realm authentication
-- Suricata alerts
-
----
-
-## 10. Current Progress
+## Project status
 
 ### Done
-
-- [x] Build Site C GNS3 topology
-- [x] Assign OPNsense-C interfaces
-- [x] Configure WAN `10.3.9.1/24`
-- [x] Configure LAN `10.3.10.1/24`
-- [x] Configure OPT1 `10.3.20.1/24`
-- [x] Configure WAN gateway `10.3.9.2`
-- [x] Disable WAN private-network and bogon blocking
-- [x] Create Site C network aliases
-- [x] Configure WAN firewall Pass rule
-- [x] Configure OPT1 / DMZ firewall Pass rule
-- [x] Configure web-C addressing
-- [x] Verify OPNsense-C to web-C connectivity
-- [x] Configure IPsec Phase 1 for Site A
-- [x] Configure IPsec Phase 1 for Site B
-- [x] Enable IPsec on OPNsense-C
+- Site C GNS3 topology
+- OPNsense WAN/LAN/DMZ addressing
+- WAN gateway `10.3.9.2`
+- LAN and DMZ firewall rules
+- Corrected WAN peer rules for Site A and Site B
+- Removed unrestricted wildcard WAN rule
+- web-C addressing and local DMZ connectivity
+- IPsec Phase 1 for Site A and Site B
+- IPsec Phase 2 configuration for Site A and Site B
+- IDS-C / Suricata installation and configuration
+- Suricata configuration test
+- Suricata ICMP alert demonstration
 
 ### In Progress
+- IPsec end-to-end tunnel verification with Site A and Site B
+- Organising final assessment evidence
 
-- [ ] Complete IPsec configuration with peer sites
-- [ ] Organise Site C assessment evidence
+### To Do / Verify
+- Confirm Phase 1 connected and Phase 2 INSTALLED for both peers
+- Capture Site C ↔ Site A cross-site ping evidence
+- Capture Site C ↔ Site B cross-site ping evidence
+- Configure/approve Tailscale route `10.3.0.0/16`
+- Verify Tailscale cross-site reachability
+- Complete/verify Kerberos local authentication
+- Complete cross-realm trust and cross-site Kerberos authentication
+- Add final `.gns3project` export
+- Complete Site C report contribution and final video evidence
 
-### To Do
-
-- [ ] Configure Tailscale on VPNRouter-C
-- [ ] Advertise and approve `10.3.0.0/16`
-- [ ] Configure IPsec Phase 2
-- [ ] Verify Site C ↔ Site A VPN
-- [ ] Verify Site C ↔ Site B VPN
-- [ ] Capture VPN before/after evidence
-- [ ] Configure Site C Kerberos KDC
-- [ ] Configure server-C and client-C
-- [ ] Configure cross-realm Kerberos trust
-- [ ] Demonstrate cross-site Kerberos authentication
-- [ ] Configure IDS-C / Suricata
-- [ ] Demonstrate Suricata alerts
-- [ ] Add Site C `.gns3project` export
-- [ ] Upload final evidence screenshots
-- [ ] Complete Site C report contributions
-- [ ] Prepare Site C final video demonstration
-
----
-
-## 11. Repository Structure
+## Repository structure
 
 ```text
 SiteC_ByUmesh/
 ├── README.md
-├── SiteC-Umesh.gns3project
+├── ADDRESSING.md
+├── Images/
+│   ├── assessment evidence images
+│   └── All_Shared_Screenshots/
 ├── configs/
-│   ├── OPNsense/
-│   ├── Kerberos/
-│   └── IDS/
-└── Images/
+├── Documentation/
+└── Notes/
+```
+
+Do not commit passwords, PSKs, keytabs, or other secrets to GitHub.
+
