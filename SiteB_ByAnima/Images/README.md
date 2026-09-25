@@ -32,3 +32,31 @@ Screenshots and testing evidence for the Site B implementation.
 #### Tailscale-SiteB-Connected
 <img width="826" height="187" alt="07-Tailscale-SiteB-Connected png" src="https://github.com/user-attachments/assets/ac1acb38-a984-4a4a-8b3f-45b9333985a2" />
 
+### 07-OPNsense-B-WAN-Firewall-Rule
+<img width="826" height="187" alt="07-Tailscale-SiteB-Connected png" src="https://github.com/user-attachments/assets/fedecd85-4d45-4c68-abca-bde8845191ae" />
+
+### 08 — OPNsense B WAN Firewall Rules Applied.
+<img width="830" height="331" alt="08-IDS-B-Management-IP" src="https://github.com/user-attachments/assets/b42952a5-52b6-46d6-996d-f1798d93b741" />
+
+### 10 Tailscale Site B Advertised Route.
+<img width="1528" height="752" alt="10-Tailscale-SiteB-Advertised-Route png" src="https://github.com/user-attachments/assets/30da86b5-d974-4fe4-a5b8-4a535a2fd527" />
+
+### 15 Suricata B Configuration.
+<img width="1535" height="320" alt="15-Suricata-B-Configuration" src="https://github.com/user-attachments/assets/3a9186cd-a257-4f1b-8f6f-d6236c3282e5" />
+
+### 16 Suricata B Alert Detection.
+<img width="1307" height="130" alt="16-Suricata-B-Alert-Detection png ✅" src="https://github.com/user-attachments/assets/a9bc2108-1626-401f-8c28-5e8040105b53" />
+
+### 17 OPNsense B Interface Ping Test.
+
+<img width="822" height="466" alt="17-OPNsense-B-Interface-Ping-Test" src="https://github.com/user-attachments/assets/6add777d-6a33-49e9-b0dc-e60191f42b7f" />
+
+
+
+
+
+
+
+
+
+
