@@ -94,9 +94,13 @@ Second, separately, `server`'s live kernel hostname was found to be `SERVER` (up
 
 **Evidence:** `SiteA_ByAbishek/Images/kerberos-02` through `-04`, `SiteA_ByAbishek/configs/kerberos-summary.md` for the complete command-by-command record.
 
-### Site B (Anima) and Site C (Umesh) - not yet built
+### Site C (Umesh) - not yet built
 
-*No Kerberos hosts exist yet at either site. Once each site has its own KDC (realms `SITEB.LOCAL`, `SITEC.LOCAL`), this section needs each site's own build documented in the same pattern as Site A above, followed by the cross-realm trust configuration and proof that is the actual multi-site deliverable.*
+*No Kerberos hosts exist yet at Site C. Once it has its own KDC (realm `SITEC.LOCAL`), this section needs Site C's build documented in the same pattern as Site A above, followed by the cross-realm trust configuration and proof that is the actual multi-site deliverable.*
+
+### Site B (Anima) - in progress
+
+*Real Kerberos work exists at Site B (KDC, principals, keytab, a client ticket, a service ticket, and GSSAPI SSH shown enabled), evidenced in screenshots. A full positive/negative login proof in the same pattern as Site A's above, and the write-up of this section with her own real detail, is pending directly from Anima.*
 
 
 ## 5. Site-to-site VPN
@@ -135,7 +139,11 @@ Configured on `OPNsense1` for both peers, using the agreed `/16` pairing:
 | Site B | 10.1.0.0/16 | 10.2.0.0/16 |
 | Site C | 10.1.0.0/16 | 10.3.0.0/16 |
 
-**Not yet live on either pairing.** Phase 2 only installs once both sides' settings match exactly - Site A's side is configured and ready, but confirmation that Anima's and Umesh's Phase 2 entries mirror this (their local = their own `/16`, their remote = `10.1.0.0/16`) has been requested and is still pending as of this writing. This is expected, not a failure: Phase 1 establishing correctly on both sides was itself the prerequisite for this step, and that groundwork is confirmed done.
+**Site A <-> Site C:** both sides now have matching Phase 2 entries (Site C's local = `10.3.0.0/16`, remote = `10.1.0.0/16`, mirroring Site A's own configuration). The WAN-upstream-gateway bug that was preventing IKE from completing has also been found and fixed independently on both firewalls, so both sides of this pairing are finally symmetric and ready for a fresh connectivity test - this is the immediate next step rather than a remaining configuration gap.
+
+**Site A <-> Site B:** Phase 2 is configured on Site A's side; confirmation that Anima's entries mirror this (her local = `10.2.0.0/16`, remote = `10.1.0.0/16`) is still pending as of this writing.
+
+Phase 1 establishing correctly on both pairings was itself the prerequisite for this step, and that groundwork is confirmed done on both.
 
 ### Still required (not yet possible)
 
@@ -189,9 +197,17 @@ This cross-check matters: it demonstrates the alert corresponds to real, indepen
 
 **Evidence:** `SiteA_ByAbishek/Images/suricata-ids1-rules-loaded.png`, `suricata-ids1-alerts-fired.png`, `host5-curl-host6-webserver.png`, `host6-access-log-confirms-host5-request.png`.
 
-### Site B (Anima) and Site C (Umesh) - not yet started
+### Site C (Umesh) - configured and proven
 
-*Neither site has a Suricata ruleset configured yet. Once built, the same wiring limitation described above is worth checking for on both sites before assuming the sensor sees general DMZ traffic - IDS-B and IDS-C both sit on their own hub in a similar topology to Site A's original design.*
+`IDS-C` (`10.3.20.20`) validated cleanly and loaded its custom ruleset without errors. ICMP traffic between `web-C` (`10.3.20.10`) and `IDS-C` produced a `SITE-C ICMP Ping Detected` alert in `fast.log`, confirmed in Site C's own evidence. Additional custom rules were added and tested during this work.
+
+The same wiring limitation described above for Site A is worth checking on Site C before assuming the sensor sees general DMZ traffic, not just traffic to/from the specific host it is wired to - this should be confirmed (or ruled out) in Site C's own write-up.
+
+**Evidence:** see `SiteC_ByUmesh/README.md` and its screenshots for the full detail.
+
+### Site B (Anima) - in progress
+
+*Suricata has been configured at Site B, with a real alert fired against real traffic (evidenced in screenshots) rather than just a clean rule-load screenshot. The exact ruleset, rule IDs, and the same cross-check pattern used for Site A and Site C (an independent confirmation that the triggering traffic actually arrived, not just Suricata's own alert) still need writing up with her own detail directly from Anima, along with checking for the same hub-vs-switch visibility limitation described above.*
 
 
 ## 7. Defence-in-depth and trust boundaries
