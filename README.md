@@ -67,12 +67,12 @@ Tracked on our GitHub Project (Kanban board) - kept current throughout the build
 
 ## Status
 
-**Site A (Abishek)** - both firewalls configured and GUI access working, Kerberos proven end-to-end (positive and negative GSSAPI login, packet capture confirmed), Tailscale live and confirmed reaching Site B, Suricata running with both custom rules firing. Site-to-site IPsec Phase 1 and Phase 2 configured for both peers (Site B and Site C); not yet confirmed as an actually-connected tunnel, and the before/after VPN capture is still outstanding. `.gns3project` export still needs adding to the repo.
+**Site A (Abishek)** - firewalls, Kerberos, Suricata, Tailscale all done and proven. IPsec Phase 1 + 2 configured for both peers; gateway bug fixed on both ends, fresh connectivity test next. Still outstanding: VPN capture, `.gns3project` export.
 
-**Site B (Anima)** - OPNsense-B addressed and configured. Kerberos built past where Site A had reached at the equivalent point - KDC, principals, keytab, and an actual client ticket already obtained. IDS-B has both a management address and routing configured. Tailscale connected to the shared tailnet. Not yet confirmed: a full GSSAPI login test (positive and negative, the way Site A proved it), VPN tunnel status, Suricata.
+**Site B (Anima)** - Kerberos, Suricata, Tailscale, and OPNsense-B rules all evidenced in screenshots; her own README/ADDRESSING write-up in progress. Still outstanding: full GSSAPI proof, VPN status.
 
-**Site C (Umesh)** - full topology built and wired. OPNsense-C addressed (WAN, LAN, DMZ), WAN gateway confirmed active, an OPT1 pass rule in place, DMZ connectivity proven (ping to web-C succeeds). IPsec Phase 1 already configured toward both Site A and Site B. Currently fixing a WAN firewall rule scoping issue (source was set to Site C's own transit range instead of the peer sites'). Not yet done: Kerberos, joining the shared tailnet, Suricata.
+**Site C (Umesh)** - topology, OPNsense-C, and Suricata done and proven. IPsec Phase 1 + 2 now configured both ways, symmetric with Site A, ready for a fresh test. Still outstanding: Kerberos, Tailscale route approval, cross-site ping evidence.
 
-Detailed, up-to-date status lives in each site's own `README.md`.
+Detailed status lives in each site's own `README.md`.
 
 🚧 In progress - due **Thursday, 1 October 2026, 11:45 PM**.
