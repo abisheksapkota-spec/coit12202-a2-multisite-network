@@ -4,8 +4,8 @@
 
 **Owner:** Umesh Kunwar  
 **Site:** Site C  
-**Kerberos realm:** `SITEC.LOCAL`  
-**Site supernet:** `10.3.0.0/16`
+**Kerberos Realm:** `SITEC.LOCAL`  
+**Site Supernet:** `10.3.0.0/16`
 
 ## Addressing
 
@@ -34,106 +34,133 @@ Interfaces:
 - OPT1/DMZ `vtnet2` → `10.3.20.1/24`
 - WAN gateway → `10.3.9.2`
 
-Current firewall work:
+Firewall configuration:
 - WAN permits Site A transit source `10.1.9.0/24`
 - WAN permits Site B transit source `10.2.9.0/24`
-- Removed the unrestricted wildcard WAN pass rule
-- LAN default IPv4 LAN-net-to-any rule retained
-- OPT1/DMZ pass rule: source `OPT1 net` → any
-- Aliases: `SITE_C_LAN` and `SITE_C_DMZ`
+- Unrestricted wildcard WAN pass rule removed
+- LAN IPv4 LAN-net-to-any rule retained
+- OPT1/DMZ pass rule configured
+- Aliases `SITE_C_LAN` and `SITE_C_DMZ` configured
 
-## IPsec
+## IPsec VPN
 
 Site C terminates IPsec on OPNsense-C WAN `10.3.9.1`.
 
 ### Site C ↔ Site A
+
 - Peer WAN: `10.1.9.1`
-- Phase 2 local: `10.3.0.0/16`
-- Phase 2 remote: `10.1.0.0/16`
+- Local network: `10.3.0.0/16`
+- Remote network: `10.1.0.0/16`
+- IKEv2 tunnel successfully established
+- CHILD_SA successfully installed
+- IPsec SPD policies verified
+- Encrypted ESP traffic from Site C captured
+
+Site C successfully establishes the tunnel and sends encrypted traffic toward Site A. Final bidirectional LAN-to-LAN verification remains dependent on return traffic from the remote site.
 
 ### Site C ↔ Site B
+
 - Peer WAN: `10.2.9.1`
-- Phase 2 local: `10.3.0.0/16`
-- Phase 2 remote: `10.2.0.0/16`
-
-Phase 2 proposal used:
-- Protocol: ESP
-- Encryption: AES-256-GCM (`aes256gcm16`)
-- Hash: SHA256
-- PFS: Group 14 (2048 bits)
-- Lifetime: 3600 seconds
-
-Phase 2 configuration has been entered. Final tunnel status and cross-site traffic still need to be captured as evidence.
-
-## Suricata IDS
-
-IDS-C uses `10.3.20.20`. Suricata configuration validation succeeded and custom rules loaded successfully. ICMP traffic between `web-C (10.3.20.10)` and `IDS-C (10.3.20.20)` generated `SITE-C ICMP Ping Detected` alerts in `fast.log`.
-
-Additional custom rules were added/tested during the IDS configuration work. Evidence is stored under `Images/All_Shared_Screenshots/`.
+- Local network: `10.3.0.0/16`
+- Remote network: `10.2.0.0/16`
+- Phase 1 and Phase 2 configuration completed
 
 ## Tailscale
 
-Site C must advertise the full Site C supernet:
+Site C is configured to advertise:
 
 `10.3.0.0/16`
 
-Tailscale cross-site routing still needs final configuration/approval and verification before marking it complete.
+Tailscale configuration and connectivity evidence has been collected for Site C.
 
 ## Kerberos
 
-- Realm: `SITEC.LOCAL`
+Realm: `SITEC.LOCAL`
+
 - KDC: `10.3.10.10`
 - Server: `10.3.10.20`
 - Client: `10.3.10.30`
 
-Local and cross-realm Kerberos verification should only be marked complete after evidence is captured.
+Completed local Kerberos configuration and verification:
 
-## Project status
+- KDC database created for `SITEC.LOCAL`
+- User principal created
+- Server host principal created
+- Server keytab generated
+- Kerberos KDC service started successfully
+- KDC authentication verified using `kinit` and `klist`
+- client-C successfully obtained a TGT for `SITEC.LOCAL`
+- server-C successfully authenticated using its host keytab
 
-### Done
+Local Site C Kerberos authentication is complete.
+
+Cross-realm Kerberos authentication requires coordination with another site's Kerberos realm and remains a group/cross-site task.
+
+## Suricata IDS
+
+IDS-C: `10.3.20.20`
+
+Completed:
+
+- Suricata installed and configured
+- Configuration validation successful
+- Custom rules successfully loaded
+- Suricata IDS service started
+- ICMP detection tested
+- Fresh `SITE-C ICMP Ping Detected` alerts captured in `fast.log`
+
+Suricata configuration and local IDS verification for Site C are complete.
+
+## GNS3 Project
+
+The final Site C GNS3 topology has been saved in the repository as:
+
+`SiteC_Umesh_Final.gns3`
+
+The topology includes the Site C firewall, VPN router, LAN hosts, Kerberos systems, DMZ web server and IDS components.
+
+## Project Status
+
+### Completed – Site C
+
 - Site C GNS3 topology
-- OPNsense WAN/LAN/DMZ addressing
-- WAN gateway `10.3.9.2`
+- Site C addressing
+- OPNsense WAN/LAN/DMZ configuration
+- WAN gateway configuration
 - LAN and DMZ firewall rules
-- Corrected WAN peer rules for Site A and Site B
-- Removed unrestricted wildcard WAN rule
-- web-C addressing and local DMZ connectivity
-- IPsec Phase 1 for Site A and Site B
-- IPsec Phase 2 configuration for Site A and Site B
-- IDS-C / Suricata installation and configuration
-- Suricata configuration test
-- Suricata ICMP alert demonstration
+- Site A and Site B WAN peer rules
+- web-C configuration and local DMZ connectivity
+- IPsec Phase 1 and Phase 2 configuration
+- Site A IKEv2 tunnel establishment
+- IPsec CHILD_SA installation
+- IPsec SPD verification
+- ESP encrypted traffic evidence
+- Tailscale Site C configuration/evidence
+- Kerberos KDC configuration
+- Kerberos principals
+- client-C Kerberos authentication
+- server-C keytab authentication
+- Suricata IDS configuration
+- Suricata fresh alert evidence
+- Final Site C topology evidence
+- Final GNS3 project file
+- Site C assessment evidence collection
 
-### In Progress
-- IPsec end-to-end tunnel verification with Site A and Site B
-- Organising final assessment evidence
+### Remaining Cross-Site / Group Verification
 
-### To Do / Verify
-- Confirm Phase 1 connected and Phase 2 INSTALLED for both peers
-- Capture Site C ↔ Site A cross-site ping evidence
-- Capture Site C ↔ Site B cross-site ping evidence
-- Configure/approve Tailscale route `10.3.0.0/16`
-- Verify Tailscale cross-site reachability
-- Complete/verify Kerberos local authentication
-- Complete cross-realm trust and cross-site Kerberos authentication
-- Add final `.gns3project` export
-- Complete Site C report contribution and final video evidence
+- Final bidirectional IPsec LAN-to-LAN verification
+- Site C ↔ Site B cross-site traffic verification
+- Cross-realm Kerberos trust and authentication
+- Required cross-site packet-capture evidence
+- Group report integration
+- Final group demonstration/video
 
-## Repository structure
+## Repository Structure
 
 ```text
 SiteC_ByUmesh/
 ├── README.md
 ├── ADDRESSING.md
-├── Images/
-│   ├── assessment evidence images
-│   └── All_Shared_Screenshots/
-├── configs/
-├── Documentation/
-└── Notes/
-```
-SiteC_ByUmesh/
-└── SiteC_Umesh_Final.gns3project
-
-Do not commit passwords, PSKs, keytabs, or other secrets to GitHub.
-
+├── SiteC_Umesh_Final.gns3
+└── SITE C IMAGES/
+    └── Site C assessment evidence screenshots
