@@ -164,4 +164,9 @@ SiteC_ByUmesh/
 ├── SiteC_Umesh_Final.gns3
 └── SITE C IMAGES/
     └── Site C assessment evidence screenshots
-    
+    └── Site C assessment evidence screenshots
+    ```
+
+## Security Note
+
+Passwords, IPsec PSKs, Kerberos keytabs and other authentication secrets must not be committed to the GitHub repository.
