@@ -12,43 +12,43 @@ Check items off as you go. Commit this file to the repo and update it honestly -
 
 ## 1. Enterprise authentication & federation - /6
 
-- [ ] Tailscale federation live between all three sites (screenshot/log of all three nodes in the tailnet) - Site A: live and confirmed. Site B: connected to the tailnet, route advertised. Site C: not yet joined - final route approval/verification still pending per Umesh's own notes.
-- [ ] Each site has a working local KDC (own realm, e.g. `SITEA.LOCAL`) - *Site A: done and proven. Site B: KDC, principals, keytab, a client ticket, a service ticket, and GSSAPI SSH shown enabled - a full positive/negative login proof (like Site A's) not yet confirmed, and not yet written up in her own README. Site C: not started - listed as still to-do in Umesh's own README.*
+- [ ] Tailscale federation live between all three sites (screenshot/log of all three nodes in the tailnet) - Site A: live and confirmed. Site B: on the tailnet, reachable from Site A. Site C: configured to advertise `10.3.0.0/16`, and the subnet route is confirmed **approved** in the Tailscale admin console (screenshot verified) - correcting the earlier "not yet joined" status. Still need a screenshot/log showing all three nodes together in the tailnet.
+- [ ] Each site has a working local KDC (own realm, e.g. `SITEA.LOCAL`) - *Site A: done and proven. Site B: KDC, principals, and a client ticket already evidenced - GSSAPI login not yet confirmed. Site C: now done locally - KDC database, principals, and keytabs are in place; `kinit`/`klist` confirmed on the client. Note: the image filed as `09_SiteC_Kerberos_ServerC_Keytab_Authentication_Success.png` does not actually show keytab authentication (it shows the IDS-C console/Suricata build info) - the server-side keytab-auth claim needs a correct screenshot before it can be counted as evidenced.*
 - [ ] Cross-realm trust configured both directions for every site pair
 - [ ] **Actual cross-site login demonstrated** - `klist` showing the ticket chain through the other site's `krbtgt`, not just local auth per site
-- [ ] Config (KDC, principals, keytabs) committed to repo - *Site A: done. Site B: evidenced in screenshots, not yet committed as write-up/config files.*
+- [ ] Config (KDC, principals, keytabs) committed to repo - *Site A: done. Site C: done.*
 
 ## 2. Firewalls & zones - /6
 
-- [ ] OPNsense at each site with WAN/LAN/DMZ/MGMT - *Site A: done. Site B: built and addressed (screenshots show interface addressing, WAN rules, ping tests both ways) - not yet written up in her own README. Site C: done (WAN/LAN/DMZ addressed, WAN rule scoping corrected).*
-- [ ] Rules per zone, same approach/philosophy at all three sites - *Site A: not yet - OPT1/OPT2 currently proven only with the firewall temporarily disabled, not with real saved rules. This needs fixing even for Site A alone.*
-- [ ] Screenshots of rules per interface, per site - *Site A and C: available. Site B: available as loose screenshots, needs folding into her README.*
+- [ ] OPNsense at each site with WAN/LAN/DMZ/MGMT - *Site A: done. Site B: diagram only, not built. Site C: fully configured (WAN/LAN/OPT1), including the WAN rule fix so the source is correctly scoped to Site A's and Site B's transit ranges rather than Site C's own.*
+- [ ] Rules per zone, same approach/philosophy at all three sites - *Site A: not yet - OPT1/OPT2 currently proven only with the firewall temporarily disabled, not with real saved rules. This needs fixing even for Site A alone. Site C: rules are saved and scoped correctly (aliases `SITE_C_LAN`/`SITE_C_DMZ`), which is ahead of Site A on this specific point.*
+- [ ] Screenshots of rules per interface, per site - *Site C has these committed; Site A still blocked on the point above.*
 - [ ] Live log evidence showing blocked traffic enforced as intended
 - [ ] Config committed to repo - *Site A: done. Site C: done.*
 
 ## 3. Site-to-site VPN - /6
 
-- [ ] Tunnel(s) up between all site pairs (IPsec or WireGuard) - *Site A <-> Site C: Phase 1 + Phase 2 now configured symmetrically on both ends, and the WAN-upstream-gateway bug that blocked traffic has been fixed on both sides - re-test for actual connectivity is the immediate next step. Site A <-> Site B: Phase 1 + Phase 2 configured on Site A's side, Site B's status not yet confirmed. Site B <-> Site C: not yet started.*
+- [ ] Tunnel(s) up between all site pairs (IPsec or WireGuard) - *Site A <-> Site C: confirmed established from Site C's side - IKE_SA and CHILD_SA up, SPIs assigned ("connection established successfully"), and live ESP traffic between `10.3.9.1` and `10.1.9.1` was captured (13 ESP packets, verified against the actual tcpdump screenshot). Still need the equivalent confirmation from Site A's own console, and bidirectional LAN-to-LAN traffic (not just the tunnel itself) hasn't been proven yet. Site A <-> Site B and Site B <-> Site C: Phase 1/Phase 2 configuration status only, not yet confirmed established.*
 - [ ] Before capture: same cross-site traffic, unprotected, payload readable
-- [ ] After capture: same traffic, tunnelled, opaque (ESP / WireGuard)
+- [ ] After capture: same traffic, tunnelled, opaque (ESP / WireGuard) - *Site C has a live ESP capture (screenshot verified) showing opaque encrypted traffic between the Site A/C tunnel endpoints; still need the matching "before" (unprotected) capture and the two to be paired with a written explanation per the rubric's own requirement below.*
 - [ ] Each capture states: where captured, filter used, what it proves
-- [ ] Both .pcap/.pcapng files committed to repo
+- [ ] Both .pcap/.pcapng files committed to repo - *screenshots exist for Site C's ESP traffic; the actual .pcap/.pcapng file itself still needs to be committed, not just the screenshot.*
 
 ## 4. Intrusion detection & consistent policy - /6
 
-- [ ] Suricata running at each site - *Site A: done, both rules loaded and firing (evidenced). Site B: rules configured and an alert fired against real traffic (evidenced in screenshots, not yet written up). Site C: a custom rule loaded and an ICMP alert fired (evidenced in his own README).*
-- [ ] Same detection policy/ruleset across all three sites - *not yet confirmed - each site's exact ruleset needs comparing once all three are documented.*
-- [ ] Alert(s) demonstrated firing (log or screenshot) - *Site A, B, and C all have at least one alert evidenced.*
+- [ ] Suricata running at each site - *Site A: done, both rules loaded and firing (evidenced). Site B: not yet confirmed. Site C: running, with a custom `SITE-C ICMP Ping Detected` rule confirmed firing in `fast.log`.*
+- [ ] Same detection policy/ruleset across all three sites - *worth checking Site A's and Site C's rule sets side by side once Site B is up, since they were built independently.*
+- [ ] Alert(s) demonstrated firing (log or screenshot) - *Site A and Site C both have this now.*
 - [ ] Placement of Suricata at each site reasoned in the report, not just stated
-- [ ] Config committed to repo - *Site A: done. Site C: done. Site B: pending her write-up.*
+- [ ] Config committed to repo
 
 ## 5. Security-justification report - /6
 
-- [x] Written as Markdown in the repo - *format done (`report/report.md`); Sections 3, 4, 5, 6 have real content for Site A, with Sections 3/4/6 also reflecting Site B and Site C's current progress where evidenced.*
-- [ ] Architecture section - not just described, *justified* - *drafted at the whole-network level; needs Sites B/C folded in fully once their own write-ups exist.*
+- [x] Written as Markdown in the repo - *format done (`report/report.md`); content only complete for Site A's sections so far.*
+- [ ] Architecture section - not just described, *justified* - *drafted at the whole-network level; needs Sites B/C folded in once built.*
 - [ ] Trust boundaries between sites explained - *not started (Section 7 still scaffold).*
-- [ ] Defence-in-depth argument across the whole topology - *not started.*
-- [ ] Every major claim cites specific capture evidence, correctly analysed - *true for Site A's drafted sections; Site B/C sections currently cite screenshot evidence where it exists, pending their own repo write-ups for full linkage.*
+- [ ] Defence-in-depth argument across the whole topology - *not started. Site A's new CA/HTTPS work (private root+intermediate CA issuing a cert for `www.sitea.local`, verified end-to-end from a client) is a good candidate for this section, since it adds an application-layer trust mechanism on top of the network-layer controls - it doesn't map to its own rubric line, so it should be folded in here rather than left standalone.*
+- [ ] Every major claim cites specific capture evidence, correctly analysed - *true for Site A's drafted sections.*
 - [ ] Links to diagrams, screenshots, and files in the repo rather than re-pasting them - *true for Site A's drafted sections.*
 
 ## 6. Wireless extension - /3
@@ -60,7 +60,7 @@ Check items off as you go. Commit this file to the repo and update it honestly -
 ## 7. Network diagram - /3
 
 - [x] `.drawio` file in the repo - *file exists, but is still the original 3-box starter template.*
-- [ ] Matches the actual build (not the original plan) - recheck after any late changes - *not yet - needs updating with all three sites' real zone/host detail.*
+- [ ] Matches the actual build (not the original plan) - recheck after any late changes - *not yet - needs updating with real zone/host detail for all three sites now that Site C's build is substantially complete too.*
 - [ ] All three sites, all zones, VPN mesh, clearly labelled
 
 ## 8. Group demonstration video - /3
@@ -68,18 +68,18 @@ Check items off as you go. Commit this file to the repo and update it honestly -
 - [ ] Real running systems shown, not slides/screenshots
 - [ ] Every member speaks and identifies themself (name + student ID)
 - [ ] Roughly equal speaking time
-- [ ] 8-12 minutes
+- [ ] 8–12 minutes
 - [ ] Submitted via Echo360
 
 ## 9. Individual contribution - /3
 
-- [ ] Own GNS3 project export included - **⚠ gap: no site has a `.gns3project` file in the repo yet - only screenshots/configs are there for any of the three. This is a concrete, easy fix worth doing before anything else on this list, for all three of us.**
+- [ ] Own GNS3 project export included - **Site A: still missing - `.gns3project` file is not yet in the repo, only screenshots/configs are. Site C: done - `SiteC_Umesh_Final.gns3` is now committed. Site B: not yet.** So this is no longer "no site has one" - it's now a Site A/B-specific gap, and worth fixing for Site A first since it's the easy, no-dependency fix it always was.
 - [ ] Regular own commits across the project timeline, not clustered at the end - *can't be assessed from a file snapshot - check your actual commit history/dates.*
-- [ ] Clear, identifiable role in the build - *Site A: yes, documented throughout. Site C: yes, documented throughout. Site B: real work exists, but isn't yet identifiable in the repo until her README/ADDRESSING write-up lands.*
+- [ ] Clear, identifiable role in the build - *Site A: yes, documented throughout. Site C: yes, documented in Umesh's own README.*
 
 ## 10. Professionalism - /3
 
 - [ ] GitHub Project (Kanban) kept current throughout, not backfilled
 - [ ] Teams channel shows active group communication
-- [ ] Repo structure and file naming follow the spec's required formats
+- [ ] Repo structure and file naming follow the spec's required formats - *worth a pass over `SiteC_ByUmesh/SITE C IMAGES/` before submission: several files share duplicate numeric prefixes (two different images both named `02_...`, `03_...`, etc., up to `13_`), which will be confusing to a marker skimming the folder even though nothing is technically missing.*
 - [ ] Submission requirements followed exactly (repo link, ZIP, video)
