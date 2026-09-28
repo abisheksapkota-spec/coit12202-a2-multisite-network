@@ -31,9 +31,9 @@ Three sites, each running an OPNsense firewall (Site A runs two), WAN/LAN/DMZ zo
 
 ```
 .
-├── SiteA_ByAbishek/                # Abishek - GNS3 export, configs/, Images/
+├── SiteA_ByAbishek/                # Abishek - GNS3 export, configs/, Images/, CA-HTTPS-Evidence/
 ├── SiteB_ByAnima/                  # Anima - GNS3 export, configs/, Images/
-├── SiteC_ByUmesh/                  # Umesh - GNS3 export, configs/, Images/
+├── SiteC_ByUmesh/                  # Umesh - GNS3 export, configs/, SITE C IMAGES/
 ├── captures/                       # Shared .pcap/.pcapng evidence (VPN before/after, etc.)
 ├── report/
 │   └── report.md                   # Security-justification report
@@ -53,6 +53,7 @@ Each site folder has its own `README.md` explaining exactly what goes where.
 - [`RUBRIC-CHECKLIST.md`](RUBRIC-CHECKLIST.md) - full marking rubric mapped to a checklist
 - [`A2-Team-Plan-Architecture.docx`](A2-Team-Plan-Architecture.docx) - architecture diagrams and task distribution
 - [`report/report.md`](report/report.md) - security-justification report *(in progress)*
+- [`SiteA_ByAbishek/CA-HTTPS-Evidence/README.md`](SiteA_ByAbishek/CA-HTTPS-Evidence/README.md) - Site A's private CA + HTTPS evidence *(new, not yet mapped to a rubric line - see note there)*
 
 ## How the sites connect
 
@@ -67,12 +68,12 @@ Tracked on our GitHub Project (Kanban board) - kept current throughout the build
 
 ## Status
 
-**Site A (Abishek)** - firewalls, Kerberos, Suricata, Tailscale all done and proven. IPsec Phase 1 + 2 configured for both peers; gateway bug fixed on both ends, fresh connectivity test next. Still outstanding: VPN capture, `.gns3project` export.
+**Site A (Abishek)** - both firewalls configured and GUI access working, Kerberos proven end-to-end (positive and negative GSSAPI login, packet capture confirmed), Tailscale live and confirmed reaching Site B, Suricata running with both custom rules firing. Site-to-site IPsec Phase 1 and Phase 2 configured for both peers (Site B and Site C); the tunnel to Site C is now confirmed up from Site C's side (IKE_SA and CHILD_SA established, ESP traffic captured - see Site C's notes below), so re-verify and capture the same evidence from Site A's own console next. `.gns3project` export still needs adding to the repo. New this week: a private root/intermediate CA was built and used to issue a certificate for `www.sitea.local`; nginx serves it correctly and a separate client verifies the full chain (`openssl verify` -> OK, `curl --cacert` returns the page) without disabling certificate checks - see [`SiteA_ByAbishek/CA-HTTPS-Evidence/`](SiteA_ByAbishek/CA-HTTPS-Evidence/README.md).
 
-**Site B (Anima)** - Kerberos, Suricata, Tailscale, and OPNsense-B rules all evidenced in screenshots; her own README/ADDRESSING write-up in progress. Still outstanding: full GSSAPI proof, VPN status.
+**Site B (Anima)** - OPNsense-B addressed and configured. Kerberos built past where Site A had reached at the equivalent point - KDC, principals, keytab, and an actual client ticket already obtained. IDS-B has both a management address and routing configured. Tailscale connected to the shared tailnet. Not yet confirmed: a full GSSAPI login test (positive and negative, the way Site A proved it), VPN tunnel status, Suricata.
 
-**Site C (Umesh)** - topology, OPNsense-C, and Suricata done and proven. IPsec Phase 1 + 2 now configured both ways, symmetric with Site A, ready for a fresh test. Still outstanding: Kerberos, Tailscale route approval, cross-site ping evidence.
+**Site C (Umesh)** - full topology built and wired, with a `.gns3project` export now committed to the repo. OPNsense-C fully configured (WAN rules scoped correctly to Site A's and Site B's transit ranges, LAN/OPT1 rules, DMZ connectivity proven). Kerberos is now complete locally: KDC database, principals, and keytabs are in place, and both `kinit`/`klist` (client) and keytab-based auth (server) have been demonstrated. Tailscale is configured to advertise `10.3.0.0/16`, and the subnet route is confirmed **approved** in the admin console (screenshot verified - this corrects the earlier "still pending" status). Site-to-site IPsec to Site A is confirmed up: IKE_SA and CHILD_SA established, and real ESP traffic between `10.3.9.1` and `10.1.9.1` was captured live. IPsec to Site B has Phase 1 + Phase 2 configured but not yet confirmed established. Suricata is running with a custom rule firing on ICMP. Remaining: bidirectional LAN-to-LAN traffic over the Site A tunnel, Site C <-> Site B connectivity, cross-realm Kerberos (a group task), and the required cross-site packet captures.
 
-Detailed status lives in each site's own `README.md`.
+Detailed, up-to-date status lives in each site's own `README.md`.
 
 🚧 In progress - due **Thursday, 1 October 2026, 11:45 PM**.
