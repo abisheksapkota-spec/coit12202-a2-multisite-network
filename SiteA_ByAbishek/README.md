@@ -1,78 +1,82 @@
-# Site A - Week 2 Evidence: CA + HTTPS Server
+# COIT12202 A2 - Secured Multi-Site Network
 
-**Site:** A (Abishek) | **Realm/domain:** `SITEA.LOCAL` | **Service host:** `www.sitea.local` (`10.1.20.20`)
+Secured multi-site network build (Kerberos, OPNsense, VPN, Suricata) - COIT12202 Assessment 2.
+Team: **Abishek** (lead), **Anima**, **Umesh**.
 
-This folder documents standing up a private CA (root + intermediate) and using it to
-issue a server certificate for Site A's web server, then proving the full chain of
-trust end-to-end from a separate client host.
+> A distributed, three-site network built and secured end-to-end by our team - federated authentication, segmented firewalls, encrypted site-to-site connectivity, and intrusion detection, with every design decision justified in the accompanying report.
 
-## What was done
+## Team
 
-1. **Intermediate CA created and signed** - a root CA and an intermediate CA were
-   built with `openssl genpkey` / `openssl req` / `openssl x509 -req`, with the
-   intermediate signed by the root. `root-ca.crt` and `intermediate.crt` both exist
-   on the CA node afterwards (`10.1.10.50`, LAN).
-   ![Intermediate CA created and signed](Images/ca-01-intermediate-created-and-signed.png)
+| Name | Role | Site | Realm |
+|---|---|---|---|
+| Abishek | Team leader | Site A | `SITEA.LOCAL` |
+| Anima | Member | Site B | `SITEB.LOCAL` |
+| Umesh | Member | Site C | `SITEC.LOCAL` |
 
-2. **SSH login to webserver** (`10.1.20.20`, Alpine Linux) to do the server-side
-   certificate work.
-   ![SSH login to webserver](Images/ca-02-ssh-login-to-webserver.png)
+## Site A network topology (as-built)
 
-3. **Server certificate signed by the CA** - a CSR for `www.sitea.local` was signed
-   by the intermediate CA (`openssl x509 -req -CA intermediate.crt -CAkey
-   intermediate.key`), producing `server.crt` with `CN=www.sitea.local` and
-   `SAN=DNS:www.sitea.local`. The cert and the CA chain (`ca-chain.crt`, i.e.
-   intermediate + root concatenated) were copied to webserver over `scp`.
-   ![Server certificate signed by the CA](Images/ca-03-server-certificate-signed-by-ca.png)
+![Site A network topology](SiteA_ByAbishek/Images/SiteA_Topology.png)
 
-4. **Web server key/cert setup and nginx validation** - a fresh 2048-bit RSA key
-   and matching CSR were generated directly on webserver, signed by the CA, and the
-   full chain (`server.crt` + `ca-chain.crt`) written to
-   `/etc/ssl/certs/server-fullchain.crt`. `nginx -t` confirms
-   *"syntax is ok / test is successful."*
-   ![Web server key/cert setup and nginx validation](Images/ca-04-webserver-key-setup-nginx-validation.png)
+Two firewalls (edge + internal), full addressing labelled on the diagram. Sites B and C follow a simpler single-firewall pattern, since a second firewall isn't required by the spec.
 
-5. **Local TLS proof on webserver** - `curl -vk https://127.0.0.1/` shows a full
-   TLS 1.3 handshake (`TLS_AES_256_GCM_SHA384`), the server certificate presented
-   (`CN=www.sitea.local`, issued by `CN=SiteA Intermediate CA`), and
-   `HTTP/1.1 200 OK` returning the page body
-   `<h1>Site A - Secured Multi-Site Network</h1>`.
-   ![Local TLS proof via curl -vk](Images/ca-05-local-tls-proof-curl-vk.png)
+## Architecture overview
 
-6. **Bug hit and fixed** - `nginx -t`/`nginx` were run before `server.key` existed
-   at `/etc/ssl/private/server.key`, producing
-   `nginx: [emerg] cannot load certificate key ... BIO_new_file failed, no such
-   file`. A `curl -vk` at that point also failed with connection refused (nginx
-   wasn't running). Fixed by generating the key/CSR/cert in the correct order
-   before starting nginx.
-   ![nginx bug and fix](Images/ca-06-bug-nginx-key-missing-then-fixed.png)
+Three sites, each running an OPNsense firewall (Site A runs two), WAN/LAN/DMZ zones, a local Kerberos KDC, and Suricata - federated over a shared Tailscale overlay, with an encrypted site-to-site VPN mesh (IPsec) carrying the real inter-site traffic on top of it, terminating on each site's OPNsense WAN interface (not the VPN router), per the unit's own reference material.
 
-7. **Client-side verification (the main evidence)** - from a separate CLIENT host:
-   `/etc/hosts` updated to resolve `www.sitea.local` to `10.1.20.20`;
-   `root-ca.crt` and `intermediate.crt` pulled from the CA node (`10.1.10.50`) and
-   `server.crt` from webserver, all via `scp`;
-   `openssl verify -CAfile root-ca.crt -untrusted intermediate.crt server.crt`
-   returns **`OK`**; `curl --cacert root-ca.crt https://www.sitea.local/` returns
-   the page body, confirming the client trusts the chain without `-k` and without
-   any CA installed in its system trust store. (First attempt failed transiently
-   with "Could not connect to server" - an immediate retry succeeded; this looks
-   like a timing issue rather than a chain-of-trust problem, since the retry used
-   an identical command.)
-   ![Client-side chain verification success](Images/ca-07-client-side-chain-verification-success.png)
+![Architecture overview](docs/images/architecture-overview.png)
 
-## Result
+*(Full diagrams - overview and per-site zone detail - are also in [`A2-Team-Plan-Architecture.docx`](A2-Team-Plan-Architecture.docx).)*
 
-A private two-tier CA (root -> intermediate) issues a certificate for
-`www.sitea.local`, nginx serves it correctly, and a separate client verifies the
-full chain and connects over HTTPS without disabling certificate checking. All
-screenshots above were checked frame-by-frame against this description before
-being committed.
+## Repository structure
 
-## Note on rubric mapping
+```
+.
+├── SiteA_ByAbishek/                # Abishek - GNS3 export, configs/, Images/, CA-HTTPS-Evidence/
+├── SiteB_ByAnima/                  # Anima - GNS3 export, configs/, Images/
+├── SiteC_ByUmesh/                  # Umesh - GNS3 export, configs/, SITE C IMAGES/
+├── captures/                       # Shared .pcap/.pcapng evidence (VPN before/after, etc.)
+├── report/
+│   └── report.md                   # Security-justification report
+├── docs/images/                    # Diagram exports used in this README
+├── network-diagram.drawio          # Multi-site network diagram (starter - expand to match the final build)
+├── ADDRESSING.md                   # IP/realm/VPN addressing scheme - source of truth
+├── RUBRIC-CHECKLIST.md             # Marking rubric tracked as a checklist
+├── A2-Team-Plan-Architecture.docx  # Architecture diagrams + task distribution
+└── README.md
+```
 
-Maps to **Criterion 2 (Firewalls & zones)** - the A2 spec asks for "your certificate
-authority and HTTPS server" to be brought into the built topology, and the rubric
-requires the DMZ zone to hold this as an actual running service. See
-`RUBRIC-CHECKLIST.md` Section 2. Also a good candidate for the report's defence-in-
-depth section, alongside Site A's other two integrated Assessment 1 controls (see
-`SSH-Hardening-Evidence.md`, `Password-Policy-Evidence.md`).
+Each site folder has its own `README.md` explaining exactly what goes where.
+
+## Key docs
+
+- [`ADDRESSING.md`](ADDRESSING.md) - IP addressing, Kerberos realms, VPN tunnel subnets
+- [`RUBRIC-CHECKLIST.md`](RUBRIC-CHECKLIST.md) - full marking rubric mapped to a checklist
+- [`A2-Team-Plan-Architecture.docx`](A2-Team-Plan-Architecture.docx) - architecture diagrams and task distribution
+- [`report/report.md`](report/report.md) - security-justification report *(in progress)*
+- [`SiteA_ByAbishek/README.md`](SiteA_ByAbishek/README.md) - Site A's private CA + HTTPS evidence
+- [`SiteA_ByAbishek/SSH-Hardening-Evidence.md`](SiteA_ByAbishek/SSH-Hardening-Evidence.md) - Site A's Week 4 SSH hardening + fail2ban evidence
+- [`SiteA_ByAbishek/Password-Policy-Evidence.md`](SiteA_ByAbishek/Password-Policy-Evidence.md) - Site A's Week 3 password policy + account lockout evidence
+- [`SiteA_ByAbishek/OPT1-DMZ-Segmentation-Evidence.md`](SiteA_ByAbishek/OPT1-DMZ-Segmentation-Evidence.md) - Site A's DMZ/LAN zone segmentation evidence (Criterion 2)
+
+## How the sites connect
+
+1. **Tailscale overlay** - federates the three independently-hosted GNS3 topologies so they can reach each other over the real internet.
+2. **Site-to-site VPN (IPsec/WireGuard)** - encrypted tunnels between each pair of OPNsense firewalls, carried over that Tailscale reachability.
+3. **Cross-realm Kerberos** - each site runs its own KDC and realm; cross-realm trust lets a user at one site authenticate to resources at another.
+4. **Suricata** - a consistent detection policy deployed at each site's LAN/WAN boundary.
+
+## Planning
+
+Tracked on our GitHub Project (Kanban board) - kept current throughout the build, not backfilled at the end. Day-to-day communication happens in our Microsoft Teams channel.
+
+## Status
+
+**Site A (Abishek)** - both firewalls configured and GUI access working, Kerberos proven end-to-end (positive and negative GSSAPI login, packet capture confirmed), Tailscale live and confirmed reaching Site B, Suricata running with both custom rules firing. Site-to-site IPsec is now confirmed established from Site A's own console for Site C (`ipsec statusall` on OPNsense1 shows `con2` ESTABLISHED, CHILD_SA installed, matching Site C's side); the tunnel to Site B is configured and was confirmed established from Site B's own console, still to be re-confirmed from Site A's side once both sites are online together. OPT1/DMZ zone segmentation is now real and saved (not the firewall-disabled workaround) - named aliases, an explicit logged deny rule, and a live-tested block, see [`SiteA_ByAbishek/OPT1-DMZ-Segmentation-Evidence.md`](SiteA_ByAbishek/OPT1-DMZ-Segmentation-Evidence.md). Week 3/4 labs (password policy on `UbuntuHost1`, SSH hardening + fail2ban on `SERVER`) are integrated into the topology and now fully screenshotted - see [`SiteA_ByAbishek/Password-Policy-Evidence.md`](SiteA_ByAbishek/Password-Policy-Evidence.md) and [`SiteA_ByAbishek/SSH-Hardening-Evidence.md`](SiteA_ByAbishek/SSH-Hardening-Evidence.md). `.gns3project` export still needs adding to the repo. A private root/intermediate CA was built and used to issue a certificate for `www.sitea.local`; nginx serves it correctly and a separate client verifies the full chain (`openssl verify` -> OK, `curl --cacert` returns the page) without disabling certificate checks - see [`SiteA_ByAbishek/README.md`](SiteA_ByAbishek/README.md).
+
+**Site B (Anima)** - OPNsense-B is now genuinely built, not diagram-only: real, saved, scoped WAN rules (confirmed via screenshot, "changes applied successfully"), and the Site A<->B IPsec tunnel is confirmed established from Site B's own console (`ipsec statusall` shows `con1` ESTABLISHED, CHILD_SA installed, real ESP traffic counted). Kerberos built past where Site A had reached at the equivalent point - KDC, principals, keytab, and an actual client ticket already obtained. Week 4 SSH hardening in progress (Ed25519 client key generated and evidenced; server-side hardening still pending - see her own `SSH-Hardening-Evidence.md`). A Site B PKI/HTTPS build mirroring Site A's CA work is also in progress. IDS-B has both a management address and routing configured, with Suricata evidence collected. Tailscale connected to the shared tailnet. Still not yet confirmed: a full GSSAPI login test (positive and negative, the way Site A proved it).
+
+**Site C (Umesh)** - full topology built and wired, with a `.gns3project` export now committed to the repo. OPNsense-C fully configured (WAN rules scoped correctly to Site A's and Site B's transit ranges, LAN/OPT1 rules, DMZ connectivity proven). Kerberos is now complete locally: KDC database, principals, and keytabs are in place, and both `kinit`/`klist` (client) and keytab-based auth (server) have been demonstrated. Tailscale is configured to advertise `10.3.0.0/16`, and the subnet route is confirmed **approved** in the admin console (screenshot verified - this corrects the earlier "still pending" status). Site-to-site IPsec to Site A is confirmed up: IKE_SA and CHILD_SA established, and real ESP traffic between `10.3.9.1` and `10.1.9.1` was captured live. IPsec to Site B has Phase 1 + Phase 2 configured but not yet confirmed established. Suricata is running with a custom rule firing on ICMP. Remaining: bidirectional LAN-to-LAN traffic over the Site A tunnel, Site C <-> Site B connectivity, cross-realm Kerberos (a group task), and the required cross-site packet captures.
+
+Detailed, up-to-date status lives in each site's own `README.md`.
+
+🚧 In progress - due **Thursday, 1 October 2026, 11:45 PM**.
