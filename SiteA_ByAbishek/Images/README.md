@@ -16,6 +16,7 @@ Screenshots and diagrams for Site A.
 - IPsec firewall rules for both peers - WAN auto-generated rules, the IPsec interface Pass rule, and the manual WAN pass rules covering all three sites' transit ranges (`opnsense1-wan-rules-ipsec-siteb-sitec.png`, `opnsense1-ipsec-interface-pass-rule.png`, `opnsense1-wan-rules-manual-pass-all-sites.png`)
 - Suricata rules loaded and both alerts fired (`suricata-ids1-*`), plus the traffic that triggered them (`host5-curl-host6-webserver.png`, `host6-access-log-confirms-host5-request.png`)
 - DMZ connectivity proof (`topology-dmz-ping-server-to-host6.png`), VNC bridge confirmation (`host1-firefox-vnc-ip-confirm.png`)
+- Week 2 CA + HTTPS evidence (`ca-01` through `ca-07`) - private CA created, cert signed, nginx serving it, and client-side chain verification; referenced step-by-step from `../README.md`
 
 ## Still to add (Site A only)
 
