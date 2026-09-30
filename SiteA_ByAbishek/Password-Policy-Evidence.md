@@ -31,6 +31,7 @@ provide the same way.
    auth    required                     pam_permit.so
    ```
    `/etc/security/faillock.conf`: `deny=5`, `unlock_time=300`.
+   ![pam_pwquality and pam_faillock configuration](Images/password-policy-pam-faillock-config.png)
 
 4. **Password-quality tested** (throwaway account `user_test`, not a real credential):
    - Weak password (`< 8 chars`) - rejected: *"BAD PASSWORD: The password is shorter than 8
@@ -39,6 +40,7 @@ provide the same way.
      *"BAD PASSWORD: The password fails the dictionary check"*) but is **not** a blocking
      failure, because `dictcheck=0` - expected, documented behaviour for this image, not a bug.
    - A compliant password is ultimately accepted: *"passwd: password updated successfully"*.
+   ![Weak password rejected by pam_pwquality](Images/password-policy-quality-rejection.png)
 
 5. **Account lockout tested end-to-end**:
    - `faillock --user user_test --reset` first, confirmed clean (empty table).
@@ -51,6 +53,7 @@ provide the same way.
    - **Recovery proven**: `faillock --user user_test --reset` followed by the correct
      password succeeds immediately - the full lock -> recover -> normal-login-restored
      lifecycle is demonstrated, not just the lockout half.
+   ![Account lockout, refusal despite correct password, and recovery](Images/password-policy-lockout-live-proof.png)
 
 ## Result
 
@@ -59,8 +62,8 @@ digit/uppercase requirements) and account lockout after 5 failed attempts (`pam_
 5-minute unlock window), both live-tested with real, timestamped evidence.
 
 **Evidence status:** commands and output above are transcribed directly from the live GNS3
-console session. Screenshots matching this narrative (analogous to the Week 2 CA/HTTPS
-evidence images) are still to be captured and added to `Images/` before final submission.
+console session, and are now fully backed by screenshots in `Images/` (linked inline above),
+covering both the quality-rejection and the lockout/recovery sequences.
 
 ## Note on rubric mapping
 
