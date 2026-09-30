@@ -14,10 +14,12 @@ the LAN zone hold this as a real, running service.
    `sshd.krb5`. The default `start-ssh.sh` script fails with `/usr/sbin/sshd: not found`.
    Fixed by generating host keys directly (`ssh-keygen -A`) and starting
    `/usr/sbin/sshd.krb5` directly, confirmed running via `pgrep -f sshd.krb5`.
+   ![SERVER sshd.krb5 started, authorized_keys set up](Images/ssh-server-sshdkrb5-authorizedkeys-setup.png)
 
 2. **Key-based authentication configured** - an Ed25519 keypair was generated and the public
    key installed into the pre-existing `student` account's `~/.ssh/authorized_keys`
    (account/group confirmed via `id student` -> `uid=10001(student) gid=20001(class)`).
+   ![Client-side key setup and successful login](Images/ssh-client-keysetup-and-login.png)
 
 3. **`sshd_config` hardened** with:
    - `PermitRootLogin no`
@@ -30,6 +32,8 @@ the LAN zone hold this as a real, running service.
    - `student` with the installed key: succeeds
    - Password authentication (any account): refused, key-only
 
+   See the client-side screenshot above (step 2) - it shows the key-based login succeeding.
+
 5. **fail2ban configured and proven live** - the stock `sshd` filter never matched, because
    this image logs as `sshd-session.krb5[PID]: ...` rather than the usual `sshd[PID]: ...`.
    A custom filter was written to match the real log format:
@@ -41,6 +45,7 @@ the LAN zone hold this as a real, running service.
 
    `jail.local` updated to use `filter = sshd-krb5`, `logpath = /var/log/messages`,
    `maxretry = 3`, `findtime = 600`, `bantime = 100`, then `fail2ban-client reload`.
+   ![fail2ban filter and jail status](Images/ssh-fail2ban-filter-jail-status.png)
 
 6. **Brute-force attack simulated from `Host1` (`10.1.10.40`)** - repeated invalid logins
    (`ssh nouser1@10.1.10.20`, `nouser2`, `nouser3`, `nouser4`, repeated) produced a real ban:
@@ -52,6 +57,7 @@ the LAN zone hold this as a real, running service.
    Currently banned:   1
    Banned IP list:     10.1.10.40
    ```
+   ![Host1 attack denied then refused - source banned](Images/ssh-fail2ban-host1-attack-banned.png)
 
 ## Result
 
@@ -62,8 +68,8 @@ A2 rubric's requirement for "the hardened SSH host on the LAN" as a real, runnin
 service - not just a config file.
 
 **Evidence status:** commands and output above are transcribed directly from the live GNS3
-console session. Screenshots matching this narrative (analogous to the Week 2 CA/HTTPS
-evidence images) are still to be captured and added to `Images/` before final submission.
+console session, and are now backed by screenshots in `Images/` (linked inline above) matching
+the Week 2 CA/HTTPS evidence pattern.
 
 ## Note on rubric mapping
 
