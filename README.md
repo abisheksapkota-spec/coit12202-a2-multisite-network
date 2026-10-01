@@ -28,7 +28,7 @@ Two firewalls (edge + internal), full addressing labelled on the diagram. Sites 
 
 Three sites, each running an OPNsense firewall (Site A runs two), WAN/LAN/DMZ zones, a local Kerberos KDC, and Suricata - federated over a shared Tailscale overlay, with an encrypted site-to-site VPN mesh (IPsec) carrying the real inter-site traffic on top of it, terminating on each site's OPNsense WAN interface (not the VPN router), per the unit's own reference material.
 
-![Architecture overview](report/images/architecture-overview.png)
+![Architecture overview](docs/images/architecture-overview.png)
 
 *(Full diagrams - overview and per-site zone detail - are also in [`A2-Team-Plan-Architecture.docx`](A2-Team-Plan-Architecture.docx).)*
 
