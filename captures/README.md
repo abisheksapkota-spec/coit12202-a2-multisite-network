@@ -1,15 +1,12 @@
-# Packet capture evidence
+# Packet Capture Evidence (Consolidated)
 
-Shared evidence used across the report. Naming convention: `<what>-<before|after>-<siteX-siteY>.pcapng`.
+This file indexes all packet-capture and connectivity-test evidence collected across the three sites. Each capture lives in its own site folder alongside its detailed write-up; this table is the single point of reference across all of them.
 
-**Required (non-negotiable):**
-- `vpn-before-<siteX-siteY>.pcapng` - cross-site traffic captured **before** the tunnel is up, payload readable
-- `vpn-after-<siteX-siteY>.pcapng` - the **same** traffic, captured **after** the tunnel is up, opaque (ESP or WireGuard)
+| File | Site | Captured at | Filter | Proves |
+|---|---|---|---|---|
+| [`Auth-Kerberos-12312491-client.pcap`](../SiteA_ByAbishek/captures/Auth-Kerberos-12312491-client.pcap) | Site A | `client`-`Switch1` link | `kerberos` | Full Kerberos AS-REQ/AS-REP/TGS-REQ/TGS-REP exchange for `abishek`, plus a negative-proof SSH attempt with zero Kerberos packets. See [`SiteA_ByAbishek/captures/README.md`](../SiteA_ByAbishek/captures/README.md). |
+| [`Client_SiteA_to_SiteB.pcap`](../SiteA_ByAbishek/captures/Client_SiteA_to_SiteB.pcap) | Site A <-> Site B | `OPNsense1`-`VPNRouter1` link | `icmp` | Site A to Site B connectivity over the Tailscale-carried transit link - 5 request/reply pairs, 0% loss. See [`SiteA_ByAbishek/captures/README.md`](../SiteA_ByAbishek/captures/README.md). |
+| [`SiteB-to-SiteC-Ping-Success.png`](../SiteB_ByAnima/captures/SiteB-to-SiteC-Ping-Success.png) | Site B <-> Site C | Site B client console | ICMP (`ping 10.3.9.2`) | Site B successfully reaching Site C - 5/5 packets, 0% loss. See [`SiteB_ByAnima/captures/README.md`](../SiteB_ByAnima/captures/README.md). |
+| [`ClientCtoSiteA.pcap`](../SiteC_ByUmesh/ClientCtoSiteA.pcap) | Site C <-> Site A | Site C | - | Site C establishing the IPsec tunnel and sending encrypted traffic toward Site A. See [`SiteC_ByUmesh/README.md`](../SiteC_ByUmesh/README.md). |
 
-Good practice: use the cross-realm Kerberos exchange as the "same traffic" for this pair - it's real application traffic and doubles as evidence for the authentication section.
-
-For every file placed here, add an entry below stating where it was captured, the display filter used, and a one-line summary of what it proves. This mirrors what must also appear in the report.
-
-| File | Captured at | Filter | Proves |
-|---|---|---|---|
-| *(fill in as you add captures)* | | | |
+Evidence of the Kerberos authentication and VPN connectivity that each capture above demonstrates is also summarised in [`report/report.md`](../report/report.md) and [`RUBRIC-CHECKLIST.md`](../RUBRIC-CHECKLIST.md).
