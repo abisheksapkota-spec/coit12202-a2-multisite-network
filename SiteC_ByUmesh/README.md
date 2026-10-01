@@ -91,6 +91,8 @@ Site C terminates IPsec on OPNsense-C WAN `10.3.9.1`.
 
 Site C successfully establishes the IPsec tunnel and sends encrypted traffic toward Site A.
 
+The repository contains `ClientCtoSiteA.pcap` as Site C packet-capture evidence.
+
 Final bidirectional LAN-to-LAN verification remains dependent on successful return traffic from the remote site.
 
 ### Site C ↔ Site B
@@ -144,6 +146,7 @@ Completed:
 - Kerberos KDC service started successfully
 - KDC authentication verified using `kinit` and `klist`
 - client-C successfully obtained a Ticket Granting Ticket
+- Invalid-password authentication attempt rejected
 - server-C successfully authenticated using its host keytab
 
 Local Site C Kerberos authentication is complete.
@@ -164,12 +167,12 @@ Completed:
 - Suricata IDS process started
 - ICMP detection tested
 - Fresh `SITE-C ICMP Ping Detected` alerts generated
-- Alerts verified in `fast.log`
+- Alerts verified in `/var/log/suricata/fast.log`
 - Suricata evidence collected
 
 Suricata provides an additional monitoring and detection layer for Site C.
 
-A live ICMP test is used in the final demonstration to generate a fresh Suricata alert.
+The collected evidence demonstrates that traffic matching the configured ICMP detection rule is detected and logged by Suricata.
 
 ---
 
@@ -201,6 +204,8 @@ Completed:
 - TLS certificate verification completed successfully
 
 This provides encrypted HTTPS communication and certificate-based server authentication for the Site C DMZ web service.
+
+> **Scope note:** The implemented Site C evidence demonstrates a local CA-signed TLS deployment. It should not be described as a root-plus-intermediate two-tier PKI unless separate evidence exists.
 
 ---
 
@@ -238,6 +243,8 @@ Additional configuration completed:
 
 Site C administrative SSH access is therefore restricted to public-key authentication and direct root SSH access is disabled.
 
+> **Scope note:** The current Site C evidence demonstrates hardened public-key SSH. It does not claim SSH CA-signed user certificates or fail2ban unless separate evidence is added.
+
 ---
 
 ## 10. Password Management and Account Security
@@ -259,6 +266,8 @@ Completed:
 
 Passwords are not stored in the repository or assessment screenshots.
 
+> **Scope note:** The current environment does not provide evidence of a complete PAM password-quality and account-lockout policy, so these controls are not claimed as completed.
+
 ---
 
 ## 11. Defence-in-Depth – Site C
@@ -268,7 +277,7 @@ Site C uses multiple complementary security controls:
 1. **OPNsense firewall** – separates WAN, LAN and DMZ security zones and enforces network-access policies.
 2. **IPsec VPN** – provides encrypted site-to-site communication.
 3. **Tailscale** – provides an additional secure overlay and subnet-routing mechanism.
-4. **Kerberos** – provides centralized authentication.
+4. **Kerberos** – provides centralized authentication within the Site C realm.
 5. **Suricata IDS** – monitors network traffic and generates security alerts.
 6. **HTTPS/TLS** – protects web communication and provides certificate-based server authentication.
 7. **SSH hardening** – protects administrative access using public-key authentication.
@@ -280,26 +289,21 @@ These controls provide prevention, authentication, encryption, monitoring and de
 
 ## 12. Final Video Demonstration – Site C
 
-The Site C contribution to the final group demonstration focuses on two complementary security layers: **OPNsense firewall enforcement and Suricata intrusion detection**.
+The Site C contribution to the final group video demonstration has been completed.
 
-### Demonstration Sequence
+The Site C demonstration covers:
 
-1. Show the complete Site C GNS3 topology.
-2. Show the relevant OPNsense firewall rule.
-3. Generate traffic that is not permitted by the firewall policy.
-4. Demonstrate that the traffic is blocked.
-5. Open OPNsense **Firewall → Log Files → Live View**.
-6. Show the corresponding firewall block event.
-7. Generate permitted ICMP traffic through Site C.
-8. Check the Suricata `fast.log`.
-9. Demonstrate a fresh `SITE-C ICMP Ping Detected` alert.
-10. Explain how the firewall and IDS provide defence-in-depth.
+- Complete Site C GNS3 topology
+- Site C addressing and security zones
+- VPNRouter-C and Tailscale connectivity
+- OPNsense firewall and network segmentation
+- Suricata intrusion detection
+- Site C ICMP detection evidence
+- Defence-in-depth security architecture
 
-### Demonstration Security Principle
+Suricata evidence demonstrates that Site C can detect and log traffic matching the configured IDS rules.
 
-The OPNsense firewall provides **prevention and policy enforcement**, while Suricata provides **monitoring and detection**.
-
-Together, these controls demonstrate that Site C does not rely on a single security mechanism.
+The Site C contribution also explains how the firewall, VPN, authentication, hardened services and IDS work together to provide defence-in-depth security.
 
 ---
 
@@ -332,57 +336,62 @@ The topology demonstrates Site C's firewall, VPN, authentication, web-security, 
 
 ### Completed – Site C
 
-- Site C GNS3 topology
-- Site C addressing
-- OPNsense WAN/LAN/DMZ configuration
-- WAN gateway configuration
-- LAN and DMZ firewall configuration
-- IPsec firewall pass rule
-- Site A and Site B WAN peer rules
-- web-C configuration and local DMZ connectivity
-- IPsec Phase 1 and Phase 2 configuration
-- Site A IKEv2 tunnel establishment
-- IPsec CHILD_SA installation
-- IPsec SPD verification
-- ESP encrypted traffic evidence
-- Tailscale Site C configuration
-- Tailscale subnet advertisement
-- Tailscale subnet-route approval
-- Tailscale connectivity evidence
-- Kerberos KDC configuration
-- Kerberos principals
-- client-C Kerberos authentication
-- server-C keytab authentication
-- Suricata IDS configuration
-- Suricata custom detection rules
-- Suricata fresh ICMP alert evidence
-- HTTPS web-server configuration
-- Site C CA and server certificate
-- HTTPS certificate verification
-- Nginx TLS configuration
-- SSH server installation and configuration
-- SSH hardening
-- Ed25519 public-key authentication
-- Successful SSH key-based login
-- Password-authentication rejection evidence
-- Root SSH login disabled
-- Password/account security configuration
-- SHA-512 password hashing
-- Final Site C topology evidence
-- Final GNS3 project file
-- Site C assessment evidence collection
-- Site C video demonstration plan
+- [x] Site C GNS3 topology
+- [x] Site C addressing
+- [x] OPNsense WAN/LAN/DMZ configuration
+- [x] WAN gateway configuration
+- [x] LAN and DMZ firewall configuration
+- [x] IPsec firewall pass rule
+- [x] Site A and Site B WAN peer rules
+- [x] web-C configuration and local DMZ connectivity
+- [x] IPsec Phase 1 and Phase 2 configuration
+- [x] Site A IKEv2 tunnel establishment
+- [x] IPsec CHILD_SA installation
+- [x] IPsec SPD verification
+- [x] ESP encrypted traffic evidence
+- [x] Tailscale Site C configuration
+- [x] Tailscale subnet advertisement
+- [x] Tailscale subnet-route approval
+- [x] Tailscale connectivity evidence
+- [x] Kerberos KDC configuration
+- [x] Kerberos principals
+- [x] client-C Kerberos authentication
+- [x] Invalid-password Kerberos rejection evidence
+- [x] server-C keytab authentication
+- [x] Suricata IDS configuration
+- [x] Suricata custom detection rules
+- [x] Suricata fresh ICMP alert evidence
+- [x] HTTPS web-server configuration
+- [x] Site C CA and server certificate
+- [x] HTTPS certificate verification
+- [x] Nginx TLS configuration
+- [x] SSH server installation and configuration
+- [x] SSH hardening
+- [x] Ed25519 public-key authentication
+- [x] Successful SSH key-based login
+- [x] Password-authentication rejection evidence
+- [x] Root SSH login disabled
+- [x] Password/account security configuration
+- [x] SHA-512 password hashing
+- [x] Final Site C topology evidence
+- [x] Final GNS3 project file
+- [x] Site C assessment evidence collection
+- [x] Site C packet-capture evidence added to repository
+- [x] `ClientCtoSiteA.pcap` added to Site C evidence
+- [x] Site C video contribution completed
+- [x] Site C README documentation updated
 
 ### Remaining Cross-Site / Group Integration
 
-- Final bidirectional cross-site LAN-to-LAN verification
-- Site C ↔ Site B cross-site traffic verification
-- Cross-realm Kerberos trust and authentication
-- Required cross-site before/after packet-capture evidence
-- Group report integration
-- Multi-site architecture/diagram integration
-- Final group demonstration/video
-- Final repository and submission verification
+- [ ] Final bidirectional cross-site LAN-to-LAN verification, if not already completed by the group
+- [ ] Site C ↔ Site B cross-site traffic verification, if required for final evidence
+- [ ] Cross-realm Kerberos trust and authentication
+- [ ] Required matching before/after packet-capture evidence for the same cross-site traffic
+- [ ] Final group report completion
+- [ ] Final multi-site architecture/diagram
+- [ ] Final 8–12 minute group demonstration/video
+- [ ] Final repository verification
+- [ ] Final Moodle/Echo360 submission
 
 ---
 
@@ -393,11 +402,10 @@ SiteC_ByUmesh/
 ├── README.md
 ├── ADDRESSING.md
 ├── SiteC_Umesh_Final.gns3
+├── PACKET CAPTURES/
+│   └── ClientCtoSiteA.pcap
 └── SITE C IMAGES/
     └── Site C assessment evidence screenshots
-    SiteC_ByUmesh/
-└── PACKET CAPTURES/
-    └── ClientCtoSiteA.pcap
 ```
 
 ---
