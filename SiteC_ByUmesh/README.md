@@ -395,6 +395,9 @@ SiteC_ByUmesh/
 ├── SiteC_Umesh_Final.gns3
 └── SITE C IMAGES/
     └── Site C assessment evidence screenshots
+    SiteC_ByUmesh/
+└── PACKET CAPTURES/
+    └── ClientCtoSiteA.pcap
 ```
 
 ---
