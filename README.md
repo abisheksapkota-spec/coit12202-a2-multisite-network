@@ -2,6 +2,9 @@
 
 Secured multi-site network build (Kerberos, OPNsense, VPN, Suricata) - COIT12202 Assessment 2.
 Team: **Abishek** (lead), **Anima**, **Umesh**.
+## GNS3 project files
+
+All three sites' `.gns3project` exports are available in this repository's **Releases** section rather than committed directly to the folders, since the files were too large to upload through GitHub's normal web interface.
 
 live demonstration: https://youtu.be/HbD1v6G0_cg
 
@@ -81,4 +84,4 @@ Tracked on our GitHub Project (Kanban board) - kept current throughout the build
 
 Detailed, up-to-date status lives in each site's own `README.md`.
 
-🚧 In progress - due **Thursday, 1 October 2026, 11:45 PM**.
+
