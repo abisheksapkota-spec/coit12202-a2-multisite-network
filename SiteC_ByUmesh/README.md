@@ -9,7 +9,26 @@
 
 ---
 
-## Addressing
+## 1. Site C Overview
+
+Site C is one component of the COIT12202 Assessment 2 secured multi-site network.
+
+The Site C implementation uses a defence-in-depth approach incorporating:
+
+- OPNsense firewalling and network segmentation
+- IPsec site-to-site VPN configuration
+- Tailscale secure overlay networking
+- Kerberos authentication
+- Suricata intrusion detection
+- HTTPS/TLS web-server protection
+- SSH hardening
+- Password and account security
+
+The Site C network uses the supernet `10.3.0.0/16`.
+
+---
+
+## 2. Addressing
 
 | Component | Address |
 |---|---|
@@ -30,7 +49,7 @@
 
 ---
 
-## OPNsense-C
+## 3. OPNsense-C Firewall
 
 ### Interfaces
 
@@ -41,17 +60,22 @@
 
 ### Firewall Configuration
 
+Completed:
+
 - WAN permits Site A transit source `10.1.9.0/24`
 - WAN permits Site B transit source `10.2.9.0/24`
 - Unrestricted wildcard WAN pass rule removed
 - LAN IPv4 LAN-net-to-any rule retained
 - OPT1/DMZ pass rule configured
 - IPsec pass rule configured
-- Aliases `SITE_C_LAN` and `SITE_C_DMZ` configured
+- Alias `SITE_C_LAN` configured
+- Alias `SITE_C_DMZ` configured
+
+OPNsense provides the primary traffic-control and segmentation layer for Site C.
 
 ---
 
-## IPsec VPN
+## 4. IPsec VPN
 
 Site C terminates IPsec on OPNsense-C WAN `10.3.9.1`.
 
@@ -65,22 +89,27 @@ Site C terminates IPsec on OPNsense-C WAN `10.3.9.1`.
 - IPsec SPD policies verified
 - Encrypted ESP traffic from Site C captured
 
-Site C successfully establishes the IPsec tunnel and sends encrypted traffic toward Site A. Final bidirectional LAN-to-LAN verification remains dependent on successful return traffic from the remote site.
+Site C successfully establishes the IPsec tunnel and sends encrypted traffic toward Site A.
+
+Final bidirectional LAN-to-LAN verification remains dependent on successful return traffic from the remote site.
 
 ### Site C ↔ Site B
 
 - Peer WAN: `10.2.9.1`
 - Local network: `10.3.0.0/16`
 - Remote network: `10.2.0.0/16`
-- Phase 1 and Phase 2 configuration completed
+- Phase 1 configuration completed
+- Phase 2 configuration completed
+
+Final cross-site traffic verification remains an integration task.
 
 ---
 
-## Tailscale VPN
+## 5. Tailscale VPN
 
-Site C VPNRouter-C is configured as a Tailscale subnet router.
+VPNRouter-C is configured as the Site C Tailscale subnet router.
 
-Advertised Site C subnet:
+### Advertised Subnet
 
 `10.3.0.0/16`
 
@@ -92,19 +121,21 @@ Completed:
 - Tailscale peer connectivity verified
 - Site C Tailscale configuration and connectivity evidence collected
 
-Tailscale provides an additional secure overlay mechanism for inter-site connectivity.
+Tailscale provides an additional secure overlay mechanism for multi-site connectivity.
 
 ---
 
-## Kerberos Authentication
+## 6. Kerberos Authentication
 
 **Realm:** `SITEC.LOCAL`
 
-- KDC: `10.3.10.10`
-- Server: `10.3.10.20`
-- Client: `10.3.10.30`
+| Component | Address |
+|---|---|
+| KDC | `10.3.10.10` |
+| Server | `10.3.10.20` |
+| Client | `10.3.10.30` |
 
-Completed local Kerberos configuration and verification:
+Completed:
 
 - KDC database created for `SITEC.LOCAL`
 - User principal created
@@ -112,36 +143,39 @@ Completed local Kerberos configuration and verification:
 - Server keytab generated
 - Kerberos KDC service started successfully
 - KDC authentication verified using `kinit` and `klist`
-- client-C successfully obtained a TGT for `SITEC.LOCAL`
+- client-C successfully obtained a Ticket Granting Ticket
 - server-C successfully authenticated using its host keytab
 
 Local Site C Kerberos authentication is complete.
 
-Cross-realm Kerberos authentication requires coordination with another site's Kerberos realm and remains a group/cross-site integration task.
+Cross-realm Kerberos authentication requires coordination with the Kerberos realms at the other sites and remains a group integration task.
 
 ---
 
-## Suricata IDS
+## 7. Suricata IDS
 
 **IDS-C:** `10.3.20.20`
 
 Completed:
 
 - Suricata installed and configured
-- Suricata configuration validation successful
-- Custom IDS rules successfully loaded
-- Suricata IDS service started
+- Configuration validation successful
+- Custom IDS rules loaded
+- Suricata IDS process started
 - ICMP detection tested
-- Fresh `SITE-C ICMP Ping Detected` alerts captured in `fast.log`
-- Suricata alert evidence collected
+- Fresh `SITE-C ICMP Ping Detected` alerts generated
+- Alerts verified in `fast.log`
+- Suricata evidence collected
 
-Suricata provides IDS monitoring for Site C and demonstrates detection of network activity using custom signatures.
+Suricata provides an additional monitoring and detection layer for Site C.
+
+A live ICMP test is used in the final demonstration to generate a fresh Suricata alert.
 
 ---
 
-## HTTPS and Certificate Security
+## 8. HTTPS and Certificate Security
 
-HTTPS security was implemented for the Site C DMZ web server.
+HTTPS protection was implemented for the Site C DMZ web server.
 
 **Web server:** `web-C`  
 **IP address:** `10.3.20.10`  
@@ -149,36 +183,34 @@ HTTPS security was implemented for the Site C DMZ web server.
 
 Completed:
 
-- Created a Site C Certificate Authority (CA)
+- Created a Site C Certificate Authority
 - Generated a private key for `web-C`
-- Generated a Certificate Signing Request (CSR)
+- Generated a Certificate Signing Request
 - Issued a CA-signed certificate for `web-C`
-- Configured Subject Alternative Names (SANs) for:
+- Configured Subject Alternative Names for:
   - `web-C`
   - `web-c.sitec.local`
   - `10.3.20.10`
-- Configured Nginx as the HTTPS web server
+- Configured Nginx as the HTTPS server
 - Configured Nginx to listen on TCP port `443`
 - Configured the issued certificate and private key in Nginx
-- Nginx configuration syntax successfully validated
+- Nginx configuration successfully validated
 - HTTPS service successfully started
 - TCP port `443` verified as listening
-- Server certificate successfully verified against the Site C CA
-- TLS certificate verification returned successfully
+- Server certificate verified against the Site C CA
+- TLS certificate verification completed successfully
 
-This configuration demonstrates certificate-based server authentication and encrypted HTTPS communication for the Site C DMZ web service.
+This provides encrypted HTTPS communication and certificate-based server authentication for the Site C DMZ web service.
 
 ---
 
-## SSH Hardening
+## 9. SSH Hardening
 
 SSH security hardening was implemented on:
 
 **server-C:** `10.3.10.20`
 
-OpenSSH was installed and configured with stronger remote-access controls.
-
-### SSH Security Controls
+### Security Controls
 
 - `PermitRootLogin no`
 - `PubkeyAuthentication yes`
@@ -193,7 +225,7 @@ OpenSSH was installed and configured with stronger remote-access controls.
 Additional configuration completed:
 
 - Created non-root SSH user `umesh`
-- Created the user's `.ssh` directory with restricted permissions
+- Created `.ssh` directory with restricted permissions
 - Generated an Ed25519 SSH key pair
 - Configured `authorized_keys`
 - Applied appropriate file ownership and permissions
@@ -201,60 +233,87 @@ Additional configuration completed:
 - SSH daemon successfully started/reloaded
 - Public-key SSH login successfully demonstrated
 - `whoami` confirmed successful login as `umesh`
-- Password-only authentication was tested and rejected
-- Root password-based SSH authentication was rejected
+- Password-only authentication tested and rejected
+- Root password-based SSH authentication rejected
 
-This demonstrates that Site C administrative SSH access is restricted to key-based authentication and direct root SSH access is disabled.
+Site C administrative SSH access is therefore restricted to public-key authentication and direct root SSH access is disabled.
 
 ---
 
-## Password Management and Account Security
+## 10. Password Management and Account Security
 
 Password and account security controls were implemented on `server-C`.
 
 Completed:
 
-- Created a dedicated non-root account `umesh`
-- Configured the user with a strong password
+- Dedicated non-root account `umesh` created
+- Password configured for the local account
 - Password stored as a cryptographic hash rather than plaintext
 - SHA-512 password hashing demonstrated
-- User account ownership and home-directory permissions verified
+- User account ownership verified
+- Home-directory permissions verified
 - `.ssh` directory permissions restricted
 - `authorized_keys` permissions restricted
 - SSH password authentication disabled
 - Public-key authentication required for remote SSH access
 
-The password itself is not stored in the repository or screenshots.
+Passwords are not stored in the repository or assessment screenshots.
 
 ---
 
-## Defence-in-Depth – Site C
+## 11. Defence-in-Depth – Site C
 
-Site C implements multiple complementary security controls:
+Site C uses multiple complementary security controls:
 
-1. **OPNsense firewall** – separates WAN, LAN and DMZ security zones and enforces traffic rules.
+1. **OPNsense firewall** – separates WAN, LAN and DMZ security zones and enforces network-access policies.
 2. **IPsec VPN** – provides encrypted site-to-site communication.
-3. **Tailscale** – provides an additional WireGuard-based secure overlay and subnet routing mechanism.
-4. **Kerberos** – provides centralized authentication for Site C systems.
-5. **Suricata IDS** – monitors traffic and generates alerts for matching network activity.
-6. **HTTPS/TLS** – protects web traffic and provides certificate-based server authentication.
-7. **SSH hardening** – restricts administrative access using public-key authentication and disables direct root/password SSH access.
-8. **Password/account security** – protects local credentials and reduces exposure of privileged accounts.
+3. **Tailscale** – provides an additional secure overlay and subnet-routing mechanism.
+4. **Kerberos** – provides centralized authentication.
+5. **Suricata IDS** – monitors network traffic and generates security alerts.
+6. **HTTPS/TLS** – protects web communication and provides certificate-based server authentication.
+7. **SSH hardening** – protects administrative access using public-key authentication.
+8. **Password/account security** – protects local credentials and reduces privileged-account exposure.
 
-Together, these controls demonstrate a layered security architecture rather than relying on a single defensive mechanism.
+These controls provide prevention, authentication, encryption, monitoring and detection at different layers of the Site C architecture.
 
 ---
 
-## GNS3 Project
+## 12. Final Video Demonstration – Site C
 
-The final Site C GNS3 topology has been saved in the repository as:
+The Site C contribution to the final group demonstration focuses on two complementary security layers: **OPNsense firewall enforcement and Suricata intrusion detection**.
+
+### Demonstration Sequence
+
+1. Show the complete Site C GNS3 topology.
+2. Show the relevant OPNsense firewall rule.
+3. Generate traffic that is not permitted by the firewall policy.
+4. Demonstrate that the traffic is blocked.
+5. Open OPNsense **Firewall → Log Files → Live View**.
+6. Show the corresponding firewall block event.
+7. Generate permitted ICMP traffic through Site C.
+8. Check the Suricata `fast.log`.
+9. Demonstrate a fresh `SITE-C ICMP Ping Detected` alert.
+10. Explain how the firewall and IDS provide defence-in-depth.
+
+### Demonstration Security Principle
+
+The OPNsense firewall provides **prevention and policy enforcement**, while Suricata provides **monitoring and detection**.
+
+Together, these controls demonstrate that Site C does not rely on a single security mechanism.
+
+---
+
+## 13. GNS3 Project
+
+The final Site C GNS3 topology is saved in the repository as:
 
 `SiteC_Umesh_Final.gns3`
 
-The topology includes:
+The topology contains:
 
-- OPNsense-C firewall
+- NAT-C
 - VPNRouter-C
+- OPNsense-C
 - LAN switch
 - Host1-C
 - kdc-C
@@ -265,11 +324,11 @@ The topology includes:
 - Hub-C
 - IDS-C
 
-The topology demonstrates Site C's firewall, VPN, authentication, web security, server hardening and IDS components.
+The topology demonstrates Site C's firewall, VPN, authentication, web-security, server-hardening and IDS components.
 
 ---
 
-## Project Status
+## 14. Project Status
 
 ### Completed – Site C
 
@@ -277,7 +336,7 @@ The topology demonstrates Site C's firewall, VPN, authentication, web security, 
 - Site C addressing
 - OPNsense WAN/LAN/DMZ configuration
 - WAN gateway configuration
-- LAN and DMZ firewall rules
+- LAN and DMZ firewall configuration
 - IPsec firewall pass rule
 - Site A and Site B WAN peer rules
 - web-C configuration and local DMZ connectivity
@@ -288,16 +347,16 @@ The topology demonstrates Site C's firewall, VPN, authentication, web security, 
 - ESP encrypted traffic evidence
 - Tailscale Site C configuration
 - Tailscale subnet advertisement
-- Tailscale subnet route approval
+- Tailscale subnet-route approval
 - Tailscale connectivity evidence
 - Kerberos KDC configuration
 - Kerberos principals
 - client-C Kerberos authentication
 - server-C keytab authentication
 - Suricata IDS configuration
-- Suricata custom rules
-- Suricata fresh alert evidence
-- HTTPS web server configuration
+- Suricata custom detection rules
+- Suricata fresh ICMP alert evidence
+- HTTPS web-server configuration
 - Site C CA and server certificate
 - HTTPS certificate verification
 - Nginx TLS configuration
@@ -305,15 +364,16 @@ The topology demonstrates Site C's firewall, VPN, authentication, web security, 
 - SSH hardening
 - Ed25519 public-key authentication
 - Successful SSH key-based login
-- Password authentication rejection evidence
+- Password-authentication rejection evidence
 - Root SSH login disabled
 - Password/account security configuration
 - SHA-512 password hashing
 - Final Site C topology evidence
 - Final GNS3 project file
 - Site C assessment evidence collection
+- Site C video demonstration plan
 
-### Remaining Cross-Site / Group Verification
+### Remaining Cross-Site / Group Integration
 
 - Final bidirectional cross-site LAN-to-LAN verification
 - Site C ↔ Site B cross-site traffic verification
@@ -326,7 +386,7 @@ The topology demonstrates Site C's firewall, VPN, authentication, web security, 
 
 ---
 
-## Repository Structure
+## 15. Repository Structure
 
 ```text
 SiteC_ByUmesh/
@@ -339,8 +399,15 @@ SiteC_ByUmesh/
 
 ---
 
-## Security Note
+## 16. Security Note
 
-Passwords, private SSH keys, CA private keys, IPsec PSKs, Kerberos keytabs and other authentication secrets must **not** be committed to the GitHub repository.
+The following sensitive information must **not** be committed to the GitHub repository:
+
+- Passwords
+- Private SSH keys
+- CA private keys
+- IPsec pre-shared keys
+- Kerberos keytabs
+- Authentication secrets
 
 Only appropriate configuration documentation, public certificates/public keys and assessment evidence should be stored in the repository.
