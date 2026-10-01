@@ -3,6 +3,8 @@
 Secured multi-site network build (Kerberos, OPNsense, VPN, Suricata) - COIT12202 Assessment 2.
 Team: **Abishek** (lead), **Anima**, **Umesh**.
 
+live demonstration: https://youtu.be/HbD1v6G0_cg
+
 > A distributed, three-site network built and secured end-to-end by our team - federated authentication, segmented firewalls, encrypted site-to-site connectivity, and intrusion detection, with every design decision justified in the accompanying report.
 
 ## Team
