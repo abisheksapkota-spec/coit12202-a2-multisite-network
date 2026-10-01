@@ -1,4 +1,4 @@
-# Site C – Umesh Kunwar
+# Site C - Umesh Kunwar
 
 ## COIT12202 Assessment 2 – Secured Multi-Site Network
 
@@ -79,7 +79,7 @@ OPNsense provides the primary traffic-control and segmentation layer for Site C.
 
 Site C terminates IPsec on OPNsense-C WAN `10.3.9.1`.
 
-### Site C ↔ Site A
+### Site C <-> Site A
 
 - Peer WAN: `10.1.9.1`
 - Local network: `10.3.0.0/16`
@@ -95,7 +95,7 @@ The repository contains `ClientCtoSiteA.pcap` as Site C packet-capture evidence.
 
 Final bidirectional LAN-to-LAN verification remains dependent on successful return traffic from the remote site.
 
-### Site C ↔ Site B
+### Site C <-> Site B
 
 - Peer WAN: `10.2.9.1`
 - Local network: `10.3.0.0/16`
@@ -205,10 +205,6 @@ Completed:
 
 This provides encrypted HTTPS communication and certificate-based server authentication for the Site C DMZ web service.
 
-> **Scope note:** The implemented Site C evidence demonstrates a local CA-signed TLS deployment. It should not be described as a root-plus-intermediate two-tier PKI unless separate evidence exists.
-
----
-
 ## 9. SSH Hardening
 
 SSH security hardening was implemented on:
@@ -243,7 +239,7 @@ Additional configuration completed:
 
 Site C administrative SSH access is therefore restricted to public-key authentication and direct root SSH access is disabled.
 
-> **Scope note:** The current Site C evidence demonstrates hardened public-key SSH. It does not claim SSH CA-signed user certificates or fail2ban unless separate evidence is added.
+  The current Site C evidence demonstrates hardened public-key SSH. It does not claim SSH CA-signed user certificates or fail2ban unless separate evidence is added.
 
 ---
 
@@ -264,13 +260,7 @@ Completed:
 - SSH password authentication disabled
 - Public-key authentication required for remote SSH access
 
-Passwords are not stored in the repository or assessment screenshots.
-
-> **Scope note:** The current environment does not provide evidence of a complete PAM password-quality and account-lockout policy, so these controls are not claimed as completed.
-
----
-
-## 11. Defence-in-Depth – Site C
+## 11. Defence-in-Depth - Site C
 
 Site C uses multiple complementary security controls:
 
@@ -287,7 +277,7 @@ These controls provide prevention, authentication, encryption, monitoring and de
 
 ---
 
-## 12. Final Video Demonstration – Site C
+## 12. Final Video Demonstration - Site C
 
 The Site C contribution to the final group video demonstration has been completed.
 
@@ -334,7 +324,7 @@ The topology demonstrates Site C's firewall, VPN, authentication, web-security, 
 
 ## 14. Project Status
 
-### Completed – Site C
+### Completed - Site C
 
 - [x] Site C GNS3 topology
 - [x] Site C addressing
@@ -381,20 +371,6 @@ The topology demonstrates Site C's firewall, VPN, authentication, web-security, 
 - [x] Site C video contribution completed
 - [x] Site C README documentation updated
 
-### Remaining Cross-Site / Group Integration
-
-- [ ] Final bidirectional cross-site LAN-to-LAN verification, if not already completed by the group
-- [ ] Site C ↔ Site B cross-site traffic verification, if required for final evidence
-- [ ] Cross-realm Kerberos trust and authentication
-- [ ] Required matching before/after packet-capture evidence for the same cross-site traffic
-- [ ] Final group report completion
-- [ ] Final multi-site architecture/diagram
-- [ ] Final 8–12 minute group demonstration/video
-- [ ] Final repository verification
-- [ ] Final Moodle/Echo360 submission
-
----
-
 ## 15. Repository Structure
 
 ```text
@@ -406,19 +382,4 @@ SiteC_ByUmesh/
 │   └── ClientCtoSiteA.pcap
 └── SITE C IMAGES/
     └── Site C assessment evidence screenshots
-```
 
----
-
-## 16. Security Note
-
-The following sensitive information must **not** be committed to the GitHub repository:
-
-- Passwords
-- Private SSH keys
-- CA private keys
-- IPsec pre-shared keys
-- Kerberos keytabs
-- Authentication secrets
-
-Only appropriate configuration documentation, public certificates/public keys and assessment evidence should be stored in the repository.
