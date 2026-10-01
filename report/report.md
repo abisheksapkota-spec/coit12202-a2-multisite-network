@@ -94,9 +94,9 @@ Second, separately, `server`'s live kernel hostname was found to be `SERVER` (up
 
 **Evidence:** `SiteA_ByAbishek/Images/kerberos-02` through `-04`, `SiteA_ByAbishek/configs/kerberos-summary.md` for the complete command-by-command record.
 
-### Site C (Umesh) - not yet built
+### Site C (Umesh) - Kerberos built locally, write-up pending
 
-*No Kerberos hosts exist yet at Site C. Once it has its own KDC (realm `SITEC.LOCAL`), this section needs Site C's build documented in the same pattern as Site A above, followed by the cross-realm trust configuration and proof that is the actual multi-site deliverable.*
+*Site C now has its own working KDC (realm `SITEC.LOCAL`) - KDC database, principals, and keytabs are in place, and `kinit`/`klist` is confirmed working on the client (see `SiteC_ByUmesh/README.md`). Server-side keytab authentication is also listed as completed there, though `RUBRIC-CHECKLIST.md` Section 1 flags that the specific screenshot filed for this (`09_SiteC_Kerberos_ServerC_Keytab_Authentication_Success.png`) doesn't actually show it - worth a correct screenshot before this is counted as evidenced. This section still needs Site C's build written up in the same evidenced pattern as Site A's above, directly from Umesh, followed by the cross-realm trust configuration and proof that is the actual multi-site deliverable - not yet started for any site pair.*
 
 ### Site B (Anima) - in progress
 
@@ -117,8 +117,8 @@ Second, separately, `server`'s live kernel hostname was found to be `SERVER` (up
 
 Both site-to-site pairings have working Tailscale connectivity, confirmed directly rather than assumed:
 
-- **Site A to Site B:** confirmed via a direct ping from `VPNRouter1` to Site B's `OPNsense-B` WAN address, 0% packet loss, after Site B independently hit and fixed the same "ARP resolves but ping fails" WAN rule gap described in Section 3.
-- **Site A to Site C:** `tailscale status` confirms both `VPNRouter1` and `VPNRouter-C` connected on the shared tailnet, with real traffic already exchanged between them (non-zero tx/rx). Direct connectivity to `OPNsense-C`'s WAN specifically has not yet been confirmed working - the same WAN rule gap was found on Site C's side, compounded by a second error (the rule's source was scoped to Site C's own transit subnet rather than the remote sites' subnets, which would never match incoming traffic regardless of the rule's presence). The fix has been communicated; re-confirmation is still pending as of this writing.
+- **Site A to Site B:** confirmed via a direct ping from `VPNRouter1` to Site B's `OPNsense-B` WAN address, 0% packet loss, after Site B independently hit and fixed the same "ARP resolves but ping fails" WAN rule gap described in Section 3. Re-confirmed again this morning from a real Site A LAN host: `CLIENT` (`10.1.10.30`) pinged Site B's VPN router (`10.2.9.2`) with 5/5 replies, 0% loss (live terminal screenshot), with a matching packet capture taken on the `OPNsense1`-`VPNRouter1` link - see `SiteA_ByAbishek/captures/README.md`, which also documents why the capture itself shows `10.1.9.1` as the source (OPNsense1's automatic outbound NAT) rather than the true LAN IP.
+- **Site A to Site C:** `tailscale status` confirms both `VPNRouter1` and `VPNRouter-C` connected on the shared tailnet, with real traffic already exchanged between them (non-zero tx/rx). Direct connectivity to `OPNsense-C`'s WAN is now confirmed working too - the same WAN rule gap, and a second error (the rule's source initially scoped to Site C's own transit subnet rather than the remote sites' subnets, which would never match incoming traffic), were both found and fixed on Site C's side. This is also independently evidenced by the Site A<->C IPsec tunnel itself now establishing successfully from both ends (see Phase 2, below) - that could not happen without working underlay connectivity first.
 
 ![Tailscale connected, VPNRouter1 live on the shared tailnet](../SiteA_ByAbishek/Images/tailscale-01-vpnrouter1-setup.png)
 
@@ -139,15 +139,19 @@ Configured on `OPNsense1` for both peers, using the agreed `/16` pairing:
 | Site B | 10.1.0.0/16 | 10.2.0.0/16 |
 | Site C | 10.1.0.0/16 | 10.3.0.0/16 |
 
-**Site A <-> Site C:** both sides now have matching Phase 2 entries (Site C's local = `10.3.0.0/16`, remote = `10.1.0.0/16`, mirroring Site A's own configuration). The WAN-upstream-gateway bug that was preventing IKE from completing has also been found and fixed independently on both firewalls, so both sides of this pairing are finally symmetric and ready for a fresh connectivity test - this is the immediate next step rather than a remaining configuration gap.
+**Site A <-> Site C:** both sides have matching Phase 2 entries (Site C's local = `10.3.0.0/16`, remote = `10.1.0.0/16`, mirroring Site A's own configuration), and the tunnel is now confirmed **established** from Site A's own console: `ipsec statusall` on `OPNsense1` shows `con2` ESTABLISHED, CHILD_SA INSTALLED, `10.1.0.0/16 === 10.3.0.0/16` - matching what Site C's side already showed independently.
 
-**Site A <-> Site B:** Phase 2 is configured on Site A's side; confirmation that Anima's entries mirror this (her local = `10.2.0.0/16`, remote = `10.1.0.0/16`) is still pending as of this writing.
+![IPsec Phase 2 to Site C established, confirmed from OPNsense1's own console](../SiteA_ByAbishek/Images/opnsense1-ipsec-phase2-sitec-established-console-proof.png)
+
+Bidirectional LAN-to-LAN traffic over this tunnel (not just the tunnel state itself) still needs proving, per `RUBRIC-CHECKLIST.md` Section 3.
+
+**Site A <-> Site B:** Phase 2 is configured on Site A's side, and the tunnel has been confirmed established from Site B's own console too (`ipsec statusall` on OPNsense-B shows `con1` ESTABLISHED, CHILD_SA INSTALLED, tunnel `10.2.0.0/16 === 10.1.0.0/16`, with real ESP traffic counted) - still to be re-confirmed from Site A's own console once both sites are online together.
 
 Phase 1 establishing correctly on both pairings was itself the prerequisite for this step, and that groundwork is confirmed done on both.
 
-### Still required (not yet possible)
+### Still required
 
-The before/after packet capture pair required for this section cannot be produced until a Phase 2 pairing actually installs on at least one tunnel - there is no real inter-site traffic to capture until then. This is the one piece of Site A's VPN work still genuinely blocked on another site's configuration, rather than something solvable independently.
+Site C's side already has a live ESP capture (screenshot evidence) showing real, opaque encrypted traffic on the Site A<->C tunnel now that Phase 2 has installed - see Site C's own evidence and `RUBRIC-CHECKLIST.md` Section 3. What's still missing for this section: the matching "before" (unencrypted) capture of the same cross-site traffic, the actual `.pcap`/`.pcapng` file itself committed to the repo (currently screenshot-only for that ESP evidence), and the before/after pair written up together with where it was captured, the filter used, and what it proves, per the rubric's own requirement.
 
 
 
