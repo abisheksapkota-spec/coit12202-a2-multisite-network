@@ -56,7 +56,6 @@ Each site folder has its own `README.md` explaining exactly what goes where.
 
 - [`ADDRESSING.md`](ADDRESSING.md) - IP addressing, Kerberos realms, VPN tunnel subnets
 - [`RUBRIC-CHECKLIST.md`](RUBRIC-CHECKLIST.md) - full marking rubric mapped to a checklist
-- [`A2-Team-Plan-Architecture.docx`](A2-Team-Plan-Architecture.docx) - architecture diagrams and task distribution
 - [`report/report.md`](report/report.md) - security-justification report *(in progress)*
 - [`SiteA_ByAbishek/README.md`](SiteA_ByAbishek/README.md) - Site A's private CA + HTTPS evidence
 - [`SiteA_ByAbishek/SSH-Hardening-Evidence.md`](SiteA_ByAbishek/SSH-Hardening-Evidence.md) - Site A's Week 4 SSH hardening + fail2ban evidence
